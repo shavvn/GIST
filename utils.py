@@ -20,8 +20,8 @@ class ArgParser(object):
     after parsing the args:
     1. flags such as debug, verbose
     (maybe should also set up logger here?)
-    2. input file/files
-    3. output file/files
+    2. input file / files
+    3. output file / files
     e.g.:
     arg_parser = ArgParser(sys.argv[1:])
     """
@@ -91,10 +91,14 @@ class ArgParser(object):
                     sys.exit(1)
         elif self.args.input_dir:
             if os.path.exists(self.args.input_dir):
-                all_files = os.listdir(self.args.input_dir)
-                for one_file in all_files:  
-                    if file_type in one_file:
-                        f_list.append(self.args.input_dir + "/" + one_file)
+                dir = self.args.input_dir
+                all_files = os.listdir(dir)
+                for each_file in all_files:  
+                    if not file_type:
+                        f_list.append(dir + "/" + each_file)
+                    else:
+                        if file_type in each_file:
+                            f_list.append(dir + "/" + each_file)
             else:
                 self.logger.error("Input dir doesn't exist!")
                 sys.exit(1)
@@ -107,7 +111,7 @@ class ArgParser(object):
                 sys.exit(1)
         else:
             self.logger.error("Must have some input...")
-            sys.exit()
+            sys.exit(1)
         return f_list
     
     def get_output_dir(self):
