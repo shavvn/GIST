@@ -19,9 +19,9 @@ class ArgParser(object):
     An ArgParser object should be able to determine the following things
     after parsing the args:
     1. flags such as debug, verbose
+    (maybe should also set up logger here?)
     2. input file/files
     3. output file/files
-    maybe should also set up logger here?
     e.g.:
     arg_parser = ArgParser(sys.argv[1:])
     """
@@ -96,17 +96,25 @@ class ArgParser(object):
                     if file_type in one_file:
                         f_list.append(self.args.input_dir + "/" + one_file)
             else:
-                logging.error("Input dir doesn't exist!")
+                self.logger.error("Input dir doesn't exist!")
                 sys.exit(1)
         elif self.args.list_file:
             if os.path.isfile(self.args.list_file):
                 for line in open(self.args.list_file, "r"):
-                    f_list.append(line.rstrip())  # rstrip get rids of end of line
+                    f_list.append(line.rstrip())  # get rids of end of line
             else:
                 self.logger.error("Input file doesn't exist!")
                 sys.exit(1)
         else:
-            logging.error("Must have some input...")
+            self.logger.error("Must have some input...")
             sys.exit()
         return f_list
-
+    
+    def get_output_dir(self):
+        if self.args.output_dir:
+            if not os.path.exists(self.args.output_dir):
+                self.logger.warning("output dir not exist, \
+                                     creating one for you...")
+                os.mkdir(self.args.output_dir)
+        return self.args.output_dir
+        
