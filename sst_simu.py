@@ -4,7 +4,9 @@ explore what interfaces should look like in this file
 
 import utils
 import itertools
-
+import json
+import os
+import tempfile
 
 class SSTSimulator(object):
     def __init__(self, config_file=""):
@@ -57,9 +59,20 @@ class SSTSimulator(object):
         return param_dict_list
 
     def run(self):
+        """ run batch jobs
+        this should also be simulator-specific, since they may have different
+        command line formats
+        :return: none
+        """
         print self.cmd
+        counter = 0
         for p in self.params:
-            print p
+            tmp_fp = tempfile.NamedTemporaryFile()
+            json.dump(p, tmp_fp)
+            cmd = self.cmd + " " + tmp_fp.name
+            print cmd
+            tmp_fp.close()
+            counter += 1
 
 
 if __name__ == "__main__":
