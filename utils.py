@@ -31,7 +31,7 @@ class ArgParser(object):
         have args ready in self.args
         """
         self.parser = argparse.ArgumentParser(description="args to parse, \
-                                              tpye --help for more info")
+                                              type --help for more info")
         self.parser.add_argument("--output_dir",
                                  help="output directory", 
                                  default="./examples/")
@@ -87,7 +87,7 @@ class ArgParser(object):
             f_list = self.args.input
             for f in f_list:
                 if not os.path.exists(f):
-                    self.logger.error("Input file %s doesn't exist!"%f)
+                    self.logger.error("Input file %s doesn't exist!" % f)
                     sys.exit(1)
         elif self.args.input_dir:
             if os.path.exists(self.args.input_dir):
@@ -101,7 +101,7 @@ class ArgParser(object):
         elif self.args.list_file:
             if os.path.isfile(self.args.list_file):
                 for line in open(self.args.list_file, "r"):
-                    f_list.append(line.rstrip())  # rstrip get rids of end of line
+                    f_list.append(line.rstrip())  # get rids of end of line
             else:
                 self.logger.error("Input file doesn't exist!")
                 sys.exit(1)
