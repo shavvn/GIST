@@ -1,14 +1,17 @@
 {
-    "simu_params":{
-        "debug": false,
-        "verbose": true,
-        "mpi":false,
-        "mpi_opts": {
-            "mpi_exe": "mpirun",
-            "n": 4
-        }
+  "sim_opts":{
+    "debug": false,
+    "verbose": true,
+    "mpi":true,
+    "mpi_opts": {
+      "mpi_exe": "mpirun",
+      "n": 4
     },
-    "model_params":{
-        "link_bw":["1GB/s", "2GB/s", "4GB/s", "8GB/s"]
-    }
+    "other_opts": ""
+  },
+  "model_params":{
+    "link_bw":["1GB/s", "2GB/s", "4GB/s", "8GB/s"],
+    "num_peers": ["2", "4"],
+    "link_lat": ["10ns"]
+  }
 }
