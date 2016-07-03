@@ -7,6 +7,7 @@ import itertools
 import json
 import os
 import tempfile
+from subprocess import call
 
 class SSTSimulator(object):
     def __init__(self, config_file=""):
@@ -27,7 +28,7 @@ class SSTSimulator(object):
         return cmd
 
     def assemble_command(self):
-        cmd = "sst"
+        cmd = "python"
         if self.configs["sim_opts"]["mpi"]:
             cmd = self.mpi_cmd_gen(cmd)
         cmd = self.add_specific_opts(cmd)
@@ -67,11 +68,12 @@ class SSTSimulator(object):
         print self.cmd
         counter = 0
         for p in self.params:
-            tmp_fp = tempfile.NamedTemporaryFile()
+            tmp_fp = tempfile.NamedTemporaryFile(delete=False)
             json.dump(p, tmp_fp)
-            cmd = self.cmd + " " + tmp_fp.name
-            print cmd
             tmp_fp.close()
+            cmd = self.cmd + " " + tmp_fp.name
+            call(cmd, shell=True)
+            os.remove(tmp_fp.name)
             counter += 1
 
 

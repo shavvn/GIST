@@ -2,18 +2,18 @@
   "sim_opts":{
     "debug": false,
     "verbose": true,
-    "mpi":true,
+    "mpi":false,
     "mpi_opts": {
       "mpi_exe": "mpirun",
       "n": 4
     },
     "other_opts": {
       "_comment":"this should contain simulator-specific options, use add_specific_opts to deal with this",
-      "target_script": "blah.py"
+      "target_script": "sst_tgt_example.py"
     }
   },
   "model_params":{
-    "link_bw":["1GB/s", "2GB/s", "4GB/s", "8GB/s"],
+    "link_bw":["1GB/s", "2GB/s"],
     "num_peers": ["2", "4"],
     "link_lat": ["10ns"]
   }
