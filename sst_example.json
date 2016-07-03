@@ -7,7 +7,10 @@
       "mpi_exe": "mpirun",
       "n": 4
     },
-    "other_opts": ""
+    "other_opts": {
+      "_comment":"this should contain simulator-specific options, use add_specific_opts to deal with this",
+      "target_script": "blah.py"
+    }
   },
   "model_params":{
     "link_bw":["1GB/s", "2GB/s", "4GB/s", "8GB/s"],

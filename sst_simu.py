@@ -9,21 +9,37 @@ import itertools
 class SSTSimulator(object):
     def __init__(self, config_file=""):
         self.configs = {}
+        self.cmd = ""
+        self.params = []
         if config_file:
             with open(config_file) as configs:
                 self.configs = utils.json_to_dict(configs)
+                self.cmd = self.assemble_command()
+                self.params = self.get_all_params()
 
     def mpi_cmd_gen(self, program_cmd):
         cmd = self.configs["sim_opts"]["mpi_opts"]["mpi_exe"]
         n_threads = self.configs["sim_opts"]["mpi_opts"]["n"]
         n_threads = int(n_threads)
-        cmd = "%s -n %d %s"%(cmd, n_threads, program_cmd)
+        cmd = "%s -n %d %s" % (cmd, n_threads, program_cmd)
         return cmd
 
     def assemble_command(self):
-        cmd = "sst %s"%self.configs["sim_opts"]["other_opts"]
+        cmd = "sst"
         if self.configs["sim_opts"]["mpi"]:
             cmd = self.mpi_cmd_gen(cmd)
+        cmd = self.add_specific_opts(cmd)
+        return cmd
+
+    def add_specific_opts(self, pre_cmd):
+        """ this handles "other_opts"
+        :param pre_cmd: the command before adding simulator specific opts
+        :return: complete command with simulator specific opts
+        """
+        print pre_cmd
+        sst_opts = self.configs["sim_opts"]["other_opts"]
+        tgt = sst_opts["target_script"]
+        cmd = pre_cmd + " " + tgt
         return cmd
 
     def get_all_params(self):
@@ -41,10 +57,8 @@ class SSTSimulator(object):
         return param_dict_list
 
     def run(self):
-        cmd = self.assemble_command()
-        params = self.get_all_params()
-        print cmd
-        for p in params:
+        print self.cmd
+        for p in self.params:
             print p
 
 
