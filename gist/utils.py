@@ -36,12 +36,19 @@ def _byteify(data, ignore_dicts=False):
 
 def setup_logger(name, level):
     """ setup logger for the entire project
-    return the logger object
     """
+    # logging.basicConfig(format="%(module)s-%(funcName)s-%(levelname)s:%(message)s")
     logger = logging.getLogger(name)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter("%(module)s-%(levelname)s: %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
     logger.setLevel(level)
-    return logger
-    
+
+
+def get_default_logger():
+    return logging.getLogger("gist")
+
 
 class ArgParser(object):
     """ Command line argument parser using built-in argparse
@@ -93,7 +100,7 @@ class ArgParser(object):
             log_level = logging.INFO
         if self.is_debug():
             log_level = logging.DEBUG
-        self.logger = setup_logger("gist", log_level)
+        setup_logger("gist", log_level)
         
     def is_debug(self):
         return self.args.debug
@@ -121,14 +128,14 @@ class ArgParser(object):
                     sys.exit(1)
         elif self.args.input_dir:
             if os.path.exists(self.args.input_dir):
-                dir = self.args.input_dir
-                all_files = os.listdir(dir)
+                in_dir = self.args.input_dir
+                all_files = os.listdir(in_dir)
                 for each_file in all_files:  
                     if not file_type:
-                        f_list.append(dir + "/" + each_file)
+                        f_list.append(in_dir + "/" + each_file)
                     else:
                         if file_type in each_file:
-                            f_list.append(dir + "/" + each_file)
+                            f_list.append(in_dir + "/" + each_file)
             else:
                 self.logger.error("Input dir doesn't exist!")
                 sys.exit(1)
@@ -151,4 +158,3 @@ class ArgParser(object):
                                      creating one for you...")
                 os.mkdir(self.args.output_dir)
         return self.args.output_dir
-        

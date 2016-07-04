@@ -1,5 +1,6 @@
 {
   "sim_opts":{
+    "sim_exe": "/opt/sst/bin/sst",
     "debug": false,
     "verbose": true,
     "mpi":false,
