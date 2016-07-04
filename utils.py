@@ -1,7 +1,37 @@
 import argparse
+import json
 import logging
 import os
 import sys
+
+
+def json_to_dict(json_file):
+    """
+    load a json file to a python dict object and get rid of
+    unicode encoding
+    :param json_file: file handler of a json file
+    :return: a python dict with no unicode in keys and values
+    """
+    return json.load(json_file, object_hook=_byteify)
+
+
+def _byteify(data, ignore_dicts=False):
+    # if this is a unicode string, return its string representation
+    if isinstance(data, unicode):
+        return data.encode('utf-8')
+    # if this is a list of values, return list of byteified values
+    if isinstance(data, list):
+        return [_byteify(item, ignore_dicts=True) for item in data]
+    # if this is a dictionary, return dictionary of byteified keys and values
+    # but only if we haven't already byteified it
+    if isinstance(data, dict) and not ignore_dicts:
+        return {
+            _byteify(key, ignore_dicts=True): _byteify(value,
+                                                       ignore_dicts=True)
+            for key, value in data.iteritems()
+        }
+    # if it's anything else, return it in its original form
+    return data
 
 
 def setup_logger(name, level):
@@ -31,7 +61,7 @@ class ArgParser(object):
         have args ready in self.args
         """
         self.parser = argparse.ArgumentParser(description="args to parse, \
-                                              tpye --help for more info")
+                                              type --help for more info")
         self.parser.add_argument("--output_dir",
                                  help="output directory", 
                                  default="./examples/")
@@ -87,7 +117,7 @@ class ArgParser(object):
             f_list = self.args.input
             for f in f_list:
                 if not os.path.exists(f):
-                    self.logger.error("Input file %s doesn't exist!"%f)
+                    self.logger.error("Input file %s doesn't exist!" % f)
                     sys.exit(1)
         elif self.args.input_dir:
             if os.path.exists(self.args.input_dir):
