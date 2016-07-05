@@ -41,7 +41,7 @@ class SSTSimulator(simulator.Simulator):
         for tmp_fp in tmp_fp_list:
             if output_as_file:
                 cmd = self.cmd + " --model-options " + tmp_fp.name + \
-                      " >> " + output_dir + "/config_%d" % counter
+                      " >> " + output_dir + "/config_%d.txt" % counter
             else:
                 cmd = self.cmd + " " + tmp_fp.name
             self.logger.debug("calling: %s" % cmd)
