@@ -48,7 +48,6 @@ def _byteify(data, ignore_dicts=False):
 def setup_logger(name, level):
     """ setup logger for the entire project
     """
-    # logging.basicConfig(format="%(module)s-%(funcName)s-%(levelname)s:%(message)s")
     logger = logging.getLogger(name)
     handler = logging.StreamHandler()
     formatter = logging.Formatter("%(module)s-%(levelname)s: %(message)s")
@@ -95,7 +94,8 @@ class ArgParser(object):
                                  help="name of output file",
                                  default="results.csv")
         self.parser.add_argument("--format",
-                                 help="The output format of the graph, either pdf or png",
+                                 help="The output format of the graph, "
+                                      "either pdf or png",
                                  default="png", type=str, choices=["pdf", "png"])
         self.parser.add_argument("-pdf", help="set output format to pdf",
                                  action="store_true")
