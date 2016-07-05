@@ -3,6 +3,17 @@ import json
 import logging
 import os
 import sys
+import time
+
+
+def get_time_str():
+    """
+    get a str of current time down to minutes
+    could be useful for output file dump
+    :return: that string
+    """
+    t_str = time.strftime("%m-%d-%H-%M")
+    return t_str
 
 
 def json_to_dict(json_file):

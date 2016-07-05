@@ -28,12 +28,26 @@ class SSTSimulator(simulator.Simulator):
         :return: none
         """
         self.cmd = self.assemble_command()
+        output_dir = self.configs["sim_opts"]["output_dir"]
+        if output_dir == "time":  # generate output dir based on time
+            output_dir = utils.get_time_str()
+        output_as_file = self.configs["sim_opts"]["output_as"] == "file"
+        if output_as_file:
+            if not os.path.exists(output_dir):
+                os.mkdir(output_dir)
+                self.logger.info("output dir not exist, creating for you!")
         tmp_fp_list = self.get_tmp_param_files()
+        counter = 0
         for tmp_fp in tmp_fp_list:
-            cmd = self.cmd + " " + tmp_fp.name
+            if output_as_file:
+                cmd = self.cmd + " " + tmp_fp.name + \
+                      " >> " + output_dir + "/config_%d" % counter
+            else:
+                cmd = self.cmd + " " + tmp_fp.name
             self.logger.debug("calling: %s" % cmd)
             call(cmd, shell=True)
             os.remove(tmp_fp.name)
+            counter += 1
 
 
 if __name__ == "__main__":

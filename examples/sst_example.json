@@ -8,6 +8,9 @@
       "mpi_exe": "mpirun",
       "n": 4
     },
+    "config_file": "temp",
+    "output_as": "file",
+    "output_dir": "./output/",
     "other_opts": {
       "_comment":"this should contain simulator-specific options, use add_specific_opts to deal with this",
       "target_script": "sst_tgt_example.py"
