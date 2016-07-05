@@ -38,7 +38,6 @@ class Simulator(object):
         if config_file:
             with open(config_file) as configs:
                 self.configs = utils.json_to_dict(configs)
-                self.cmd = self.assemble_command()
                 self.params = self.get_all_params()
         if not self.configs:
             self.logger.fatal("Cannot load config file!")
@@ -89,20 +88,23 @@ class Simulator(object):
         # now param_dict_list has all combinations of params
         return param_dict_list
 
+    def get_tmp_param_files(self):
+        """ Generate a temp file for each param possible
+        :return: list of file pointers
+        """
+        tmp_fp_list = []
+        for p in self.params:
+            tmp_fp = tempfile.NamedTemporaryFile(delete=False)
+            json.dump(p, tmp_fp)
+            tmp_fp.close()
+            tmp_fp_list.append(tmp_fp)
+        return tmp_fp_list
+
     def run(self):
         """ run simulation by calling the exe
         this should also be simulator-specific, since they may have different
         command line formats
         :return: none
         """
-        print self.cmd
-        counter = 0
-        for p in self.params:
-            tmp_fp = tempfile.NamedTemporaryFile(delete=False)
-            json.dump(p, tmp_fp)
-            tmp_fp.close()
-            cmd = self.cmd + " " + tmp_fp.name
-            self.logger.debug("calling: %s" % cmd)
-            call(cmd, shell=True)
-            os.remove(tmp_fp.name)
-            counter += 1
+        self.cmd = self.assemble_command()
+        self.logger.info(self.cmd)
