@@ -30,13 +30,13 @@ class Simulator(object):
     Run Commands: run time commands, like the executable, mpi, debug, 
                   verbose, input/output dirs
     """
-    def __init__(self, config_file=""):
+    def __init__(self, config_file_name=""):
         self.configs = {}
         self.cmd = ""
         self.params = []
         self.logger = utils.get_default_logger()
-        if config_file:
-            with open(config_file) as configs:
+        if config_file_name:
+            with open(config_file_name) as configs:
                 self.configs = utils.json_to_dict(configs)
                 self.params = self.get_all_params()
         if not self.configs:
