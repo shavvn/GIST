@@ -112,13 +112,14 @@ class ArgParser(object):
         if self.is_debug():
             log_level = logging.DEBUG
         setup_logger("gist", log_level)
+        self.logger = logging.getLogger("gist")
         
     def is_debug(self):
         return self.args.debug
         
     def is_verbose(self):
         return self.args.verbose
-    
+
     def get_logger(self):
         return self.logger
         
