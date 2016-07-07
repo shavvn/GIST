@@ -55,6 +55,7 @@ def setup_logger(name, level):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(level)
+    return logger
 
 
 def get_default_logger():
@@ -111,7 +112,7 @@ class ArgParser(object):
             log_level = logging.INFO
         if self.is_debug():
             log_level = logging.DEBUG
-        setup_logger("gist", log_level)
+        self.logger = setup_logger("gist", log_level)
         
     def is_debug(self):
         return self.args.debug
