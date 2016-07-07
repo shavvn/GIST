@@ -4,11 +4,9 @@ We will see...
 """
 import itertools
 import json
-import os
 import sys
 import tempfile
 import utils
-from subprocess import call
 
 
 class Simulation(object):
