@@ -48,14 +48,12 @@ def _byteify(data, ignore_dicts=False):
 def setup_logger(name, level):
     """ setup logger for the entire project
     """
-    # logging.basicConfig(format="%(module)s-%(funcName)s-%(levelname)s:%(message)s")
     logger = logging.getLogger(name)
     handler = logging.StreamHandler()
     formatter = logging.Formatter("%(module)s-%(levelname)s: %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(level)
-    return logger
 
 
 def get_default_logger():
@@ -96,7 +94,8 @@ class ArgParser(object):
                                  help="name of output file",
                                  default="results.csv")
         self.parser.add_argument("--format",
-                                 help="The output format of the graph, either pdf or png",
+                                 help="The output format of the graph, "
+                                      "either pdf or png",
                                  default="png", type=str, choices=["pdf", "png"])
         self.parser.add_argument("-pdf", help="set output format to pdf",
                                  action="store_true")
@@ -112,14 +111,15 @@ class ArgParser(object):
             log_level = logging.INFO
         if self.is_debug():
             log_level = logging.DEBUG
-        self.logger = setup_logger("gist", log_level)
+        setup_logger("gist", log_level)
+        self.logger = logging.getLogger("gist")
         
     def is_debug(self):
         return self.args.debug
         
     def is_verbose(self):
         return self.args.verbose
-    
+
     def get_logger(self):
         return self.logger
         
