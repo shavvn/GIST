@@ -11,7 +11,7 @@ from subprocess import call
 class SSTSimulator(simulator.Simulator):
     def __init__(self, config_file=""):
         super(SSTSimulator, self).__init__(config_file)
-        self.output_dir = self.configs["sim_opts"]["output_dir"]
+        # self.output_dir = self.configs["sim_opts"]["output_dir"]
 
     def add_specific_opts(self, pre_cmd):
         """ this handles ["other_opts"]
@@ -28,24 +28,30 @@ class SSTSimulator(simulator.Simulator):
         :return: none
         """
         self.cmd = self.assemble_command()
-        output_dir = self.configs["sim_opts"]["output_dir"]
-        if output_dir == "time":  # generate output dir based on time
-            output_dir = utils.get_time_str()
+        output_dir_base = self.configs["sim_opts"]["output_dir"]
+        if output_dir_base == "time":  # generate output dir based on time
+            output_dir_base = utils.get_time_str()
         output_as_file = self.configs["sim_opts"]["output_as"] == "file"
         if output_as_file:
-            if not os.path.exists(output_dir):
-                os.mkdir(output_dir)
+            if not os.path.exists(output_dir_base):
+                os.mkdir(output_dir_base)
                 self.logger.info("output dir not exist, creating for you!")
         tmp_fp_list = self.get_tmp_param_files()
         counter = 0
         for tmp_fp in tmp_fp_list:
+            # make sub dir first
+            output_dir = os.path.join(output_dir_base, "config_%d"% counter)
+            os.mkdir(output_dir)
             if output_as_file:
                 cmd = self.cmd + " --model-options " + tmp_fp.name + \
-                      " >> " + output_dir + "/config_%d.txt" % counter
+                      " >> " + output_dir + "/output_%d.log" % counter
             else:
                 cmd = self.cmd + " " + tmp_fp.name
             self.logger.debug("calling: %s" % cmd)
-            call(cmd, shell=True)
+            with open(tmp_fp.name, "r") as opened_fp:
+                self.logger.debug("tmpfile: %s" % opened_fp.read())
+            if self.logger.getEffectiveLevel() > 10:  # only run cmd if not DEBUG
+                call(cmd, shell=True)
             os.remove(tmp_fp.name)
             counter += 1
 
