@@ -29,14 +29,16 @@ class Simulator(object):
                   verbose, input/output dirs
     """
     def __init__(self, config_file_name=""):
-        self.configs = {}
         self.cmd = ""
         self.params = []
+        self.sim_opts = {}
         self.logger = utils.get_default_logger()
         if config_file_name:
-            with open(config_file_name) as configs:
-                self.configs = utils.json_to_dict(configs)
-                self.params = self.get_all_params()
+            with open(config_file_name) as config_f:
+                configs = utils.json_to_dict(config_f)
+                self.params = self.get_all_params(configs["model_params"])
+                self.sim_opts = configs["sim_opts"]
+                config_f.close()
         if not self.configs:
             self.logger.fatal("Cannot load config file!")
             sys.exit(1)
@@ -46,8 +48,8 @@ class Simulator(object):
         :param program_cmd: stuff to attach to after mpi
         :return: command string with MPI
         """
-        cmd = self.configs["sim_opts"]["mpi_opts"]["mpi_exe"]
-        n_threads = self.configs["sim_opts"]["mpi_opts"]["n"]
+        cmd = self.sim_opts["mpi_opts"]["mpi_exe"]
+        n_threads = self.sim_opts["mpi_opts"]["n"]
         n_threads = int(n_threads)
         cmd = "%s -n %d %s" % (cmd, n_threads, program_cmd)
         return cmd
@@ -58,8 +60,8 @@ class Simulator(object):
         could be overridden if necessary
         :return: command string
         """
-        cmd = self.configs["sim_opts"]["sim_exe"]
-        if self.configs["sim_opts"]["mpi"]:
+        cmd = self.sim_opts["sim_exe"]
+        if self.sim_opts["mpi"]:
             cmd = self.mpi_cmd_gen(cmd)
         cmd = self.add_specific_opts(cmd)
         return cmd
@@ -72,13 +74,13 @@ class Simulator(object):
         self.logger.info("No simulator-specific opts!")
         return pre_cmd
 
-    def get_all_params(self):
+    def get_all_params(self, param_dict):
         """
         get all the combinations of params based on config["model_params"]
         (basically a cross product
         :return: a list of dict objects, each dict is an unique param set
         """
-        params = self.configs["model_params"]
+        params = param_dict
         param_list = itertools.product(*params.values())
         param_dict_list = []
         for v in param_list:
