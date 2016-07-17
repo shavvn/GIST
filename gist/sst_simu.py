@@ -18,7 +18,7 @@ class SSTSimulator(simulator.Simulator):
         :param pre_cmd: the command before adding simulator specific opts
         :return: complete command with simulator specific opts
         """
-        sst_opts = self.configs["sim_opts"]["other_opts"]
+        sst_opts = self.sim_opts["other_opts"]
         tgt = sst_opts["target_script"]
         cmd = pre_cmd + " " + tgt
         return cmd
@@ -28,10 +28,10 @@ class SSTSimulator(simulator.Simulator):
         :return: none
         """
         self.cmd = self.assemble_command()
-        output_dir_base = self.configs["sim_opts"]["output_dir"]
+        output_dir_base = self.sim_opts["output_dir"]
         if output_dir_base == "time":  # generate output dir based on time
             output_dir_base = utils.get_time_str()
-        output_as_file = self.configs["sim_opts"]["output_as"] == "file"
+        output_as_file = self.sim_opts["output_as"] == "file"
         if output_as_file:
             if not os.path.exists(output_dir_base):
                 os.mkdir(output_dir_base)
@@ -42,11 +42,15 @@ class SSTSimulator(simulator.Simulator):
             # make sub dir first
             output_dir = os.path.join(output_dir_base, "config_%d"% counter)
             os.mkdir(output_dir)
+            cmd = self.cmd + " --output-directory %s"%output_dir 
+            if self.sim_opts["dump_config"]:
+                cmd = cmd + " --output-config " + \
+                      os.path.join(output_dir, "config.py")
             if output_as_file:
-                cmd = self.cmd + " --model-options " + tmp_fp.name + \
+                cmd = cmd + " --model-options " + tmp_fp.name + \
                       " >> " + output_dir + "/output_%d.log" % counter
             else:
-                cmd = self.cmd + " " + tmp_fp.name
+                cmd = cmd + " " + tmp_fp.name
             self.logger.debug("calling: %s" % cmd)
             with open(tmp_fp.name, "r") as opened_fp:
                 self.logger.debug("tmpfile: %s" % opened_fp.read())

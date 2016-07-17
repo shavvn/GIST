@@ -39,8 +39,8 @@ class Simulator(object):
                 self.params = self.get_all_params(configs["model_params"])
                 self.sim_opts = configs["sim_opts"]
                 config_f.close()
-        if not self.configs:
-            self.logger.fatal("Cannot load config file!")
+        if not self.params:
+            self.logger.fatal("Did not load valid params!")
             sys.exit(1)
 
     def mpi_cmd_gen(self, program_cmd):
