@@ -47,7 +47,8 @@ class SSTSimulator(simulator.Simulator):
                 cmd = cmd + " --output-config " + \
                       os.path.join(output_dir, "config.py")
             if output_as_file:
-                cmd = cmd + " --model-options " + tmp_fp.name + \
+                cmd = cmd + " --model-options " + "\"%s %s\""% \
+                      (tmp_fp.name, output_dir) + \
                       " >> " + output_dir + "/output_%d.log" % counter
             else:
                 cmd = cmd + " " + tmp_fp.name
