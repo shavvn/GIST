@@ -79,13 +79,13 @@ class ArgParser(object):
         """
         self.parser = argparse.ArgumentParser(description="args to parse, \
                                               type --help for more info")
-        self.parser.add_argument("--output_dir",
+        self.parser.add_argument("--output-dir",
                                  help="output directory", 
                                  default="./examples/")
-        self.parser.add_argument("--input_dir",
+        self.parser.add_argument("--input-dir",
                                  help="input dir contains all input files",
                                  default="./examples/")
-        self.parser.add_argument("--list_file",
+        self.parser.add_argument("--list-file",
                                  help="input file contains list of file dir + names",
                                  default="all_csv_files.txt")
         self.parser.add_argument("input", nargs="*",
@@ -142,12 +142,9 @@ class ArgParser(object):
             if os.path.exists(self.args.input_dir):
                 in_dir = self.args.input_dir
                 all_files = os.listdir(in_dir)
-                for each_file in all_files:  
-                    if not file_type:
+                for each_file in all_files:
+                    if os.path.isfile(each_file):
                         f_list.append(in_dir + "/" + each_file)
-                    else:
-                        if file_type in each_file:
-                            f_list.append(in_dir + "/" + each_file)
             else:
                 self.logger.error("Input dir doesn't exist!")
                 sys.exit(1)
@@ -159,9 +156,16 @@ class ArgParser(object):
                 self.logger.error("Input file doesn't exist!")
                 sys.exit(1)
         else:
-            self.logger.error("Must have some input...")
+            self.logger.warn("No input file specified!")
             sys.exit(1)
-        return f_list
+        if not file_type:
+            return f_list
+        else:
+            filtered_list = []
+            for f in f_list:
+                if file_type in f:
+                    filtered_list.append(f)
+            return filtered_list
     
     def get_output_dir(self):
         if self.args.output_dir:

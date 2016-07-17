@@ -27,5 +27,23 @@ class UtilTest(unittest.TestCase):
         level = arg_parser.logger.getEffectiveLevel()
         self.assertEqual(level, 30)
 
+    def test_get_input_basic(self):
+        arg_parser = utils.ArgParser(["README.md", ".gitignore"])
+        in_files = arg_parser.get_input_files()
+        self.assertEqual(len(in_files), 2)
+
+    def test_get_input_type(self):
+        arg_parser = utils.ArgParser(["README.md", ".gitignore"])
+        in_files = arg_parser.get_input_files(file_type=".md")
+        self.assertEqual(len(in_files), 1)
+
+    def test_get_input_from_dir(self):
+        arg_parser = utils.ArgParser(["--input-dir", "."])
+        in_files = arg_parser.get_input_files()
+        self.assertEqual(len(in_files), 3)
+        arg_parser = utils.ArgParser(["--input-dir", "."])
+        in_files = arg_parser.get_input_files(file_type=".md")
+        self.assertEqual(len(in_files), 1)
+
 if __name__ == '__main__':
     unittest.main()
