@@ -42,7 +42,7 @@ class SSTSimulator(simulator.Simulator):
             # make sub dir first
             output_dir = os.path.join(output_dir_base, "config_%d"% counter)
             os.mkdir(output_dir)
-            cmd = self.cmd + " --output-directory %s"%output_dir 
+            cmd = self.cmd # + " --output-directory %s"%output_dir 
             if self.sim_opts["dump_config"]:
                 cmd = cmd + " --output-config " + \
                       os.path.join(output_dir, "config.py")
@@ -55,7 +55,7 @@ class SSTSimulator(simulator.Simulator):
             self.logger.debug("calling: %s" % cmd)
             with open(tmp_fp.name, "r") as opened_fp:
                 self.logger.debug("tmpfile: %s" % opened_fp.read())
-            if self.logger.getEffectiveLevel() > 10:  # only run cmd if not DEBUG
+            if self.logger.getEffectiveLevel() > 10:  # run cmd if not DEBUG
                 call(cmd, shell=True)
             os.remove(tmp_fp.name)
             counter += 1
