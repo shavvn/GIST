@@ -2,8 +2,10 @@
 It's gonna take a while to figure out the structure of this project.
 We will see...
 """
+import csv
 import itertools
 import json
+import os
 import sys
 import tempfile
 import utils
@@ -99,7 +101,25 @@ class Simulator(object):
             tmp_fp.close()
             tmp_fp_list.append(tmp_fp)
         return tmp_fp_list
-
+    
+    def dump_param_summary(self, param_list, output_dir_base):
+        with open(os.path.join(output_dir_base, "config.csv"), "wb") as fp:
+            writer = csv.writer(fp)
+            header = ["configs"]
+            for key in param_list[0]:
+                header.append(key)
+            self.logger.debug("keys:")
+            self.logger.debug(header)
+            writer.writerow(header)
+            config_num = 0
+            for param in param_list:
+                row = ["config_%d"%config_num, ]
+                for key, value in param.items():
+                    row.append(value)
+                writer.writerow(row)
+                config_num +=1
+            fp.close()
+            
     def run(self):
         """ run simulation by calling the exe
         this should also be simulator-specific, since they may have different
