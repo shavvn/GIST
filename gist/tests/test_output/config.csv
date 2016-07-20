@@ -1,0 +1,9 @@
+configs,dragonfly:hosts_per_router,generator,dragonfly:routers_per_group,hosts_per_router,dragonfly:intergroup_per_router,link_lat,link_bw,total_requests
+config_0,4,miranda.GUPSGenerator,4,2,1,10ns,1GB/s,2000
+config_1,4,miranda.GUPSGenerator,4,2,1,10ns,2GB/s,2000
+config_2,4,miranda.GUPSGenerator,4,2,1,10ns,5GB/s,2000
+config_3,4,miranda.GUPSGenerator,4,2,1,10ns,10GB/s,2000
+config_4,4,miranda.STREAMBenchGenerator,4,2,1,10ns,1GB/s,2000
+config_5,4,miranda.STREAMBenchGenerator,4,2,1,10ns,2GB/s,2000
+config_6,4,miranda.STREAMBenchGenerator,4,2,1,10ns,5GB/s,2000
+config_7,4,miranda.STREAMBenchGenerator,4,2,1,10ns,10GB/s,2000

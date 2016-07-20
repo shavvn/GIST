@@ -1,0 +1,2 @@
+{'dragonfly:hosts_per_router': 4, 'generator': 'miranda.GUPSGenerator', 'dragonfly:routers_per_group': 4, 'hosts_per_router': 2, 'dragonfly:intergroup_per_router': 1, 'link_lat': '10ns', 'link_bw': '1GB/s', 'total_requests': 2000}
+Simulation is complete, simulated time: 15.364 us
