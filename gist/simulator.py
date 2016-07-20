@@ -128,3 +128,8 @@ class Simulator(object):
         """
         self.cmd = self.assemble_command()
         self.logger.info(self.cmd)
+    
+    def compile_output(self, output_dir_base):
+        self.logger.warning("this should be implemented by sub-classes")
+        
+            
