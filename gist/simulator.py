@@ -32,14 +32,15 @@ class Simulator(object):
     """
     def __init__(self, config_file_name=""):
         self.cmd = ""
+        self.configs = {}
         self.params = []
         self.sim_opts = {}
         self.logger = utils.get_default_logger()
         if config_file_name:
             with open(config_file_name) as config_f:
-                configs = utils.json_to_dict(config_f)
-                self.params = self.get_all_params(configs["model_params"])
-                self.sim_opts = configs["sim_opts"]
+                self.configs = utils.json_to_dict(config_f)
+                self.params = self.get_all_params(self.configs["model_params"])
+                self.sim_opts = self.configs["sim_opts"]
                 config_f.close()
         if not self.params:
             self.logger.fatal("Did not load valid params!")

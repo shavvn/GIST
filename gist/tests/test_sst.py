@@ -36,8 +36,14 @@ class SSTTest(unittest.TestCase):
                         sst.stats)
     
     def test_compile_output(self):
-        sst_simu.SSTSimulator.compile_output("gist/tests/test_output")
-        
+        sst = sst_simu.SSTSimulator("examples/sst_example.json")
+        sst.compile_output("gist/tests/test_output")
+        with open("gist/tests/test_output/summary.csv", "r") as smy, \
+             open("gist/tests/test_output/summary_gold.csv", "r") as gold:
+            str_1 = smy.read()
+            str_2 = gold.read()
+            self.assertEqual(str_1, str_2)
+       
 if __name__ == '__main__':
     unittest.main()
 

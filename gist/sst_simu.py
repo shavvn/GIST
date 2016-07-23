@@ -11,22 +11,13 @@ from subprocess import call
 
 class SSTSimulator(simulator.Simulator):
     stats = {
-            "rtr_send_packet":["rtr:", "send_packet_count"],
-            "l1_cache_hit": ["l1_", "CacheHits"],
-            "l2_cache_hit": ["l2_", "CacheHits"],
-            "l3_cache_hit": ["l3_", "CacheHits"],
-            "l1_cache_miss": ["l1_", "CacheMisses"],
-            "l2_cache_miss": ["l2_", "CacheMisses"],
-            "l3_cache_miss": ["l3_", "CacheMisses"],
-            "l1_cohr_events" : ["l1_", "_recv"],
-            "l2_cohr_events" : ["l2_", "_recv"],
-            "l3_cohr_events" : ["l3_", "_recv"],
-        }
-        
+        # should be in format of key:[col_1 key, col_2 key]
+    }       
 
     def __init__(self, config_file=""):
         super(SSTSimulator, self).__init__(config_file)
         # self.output_dir = self.configs["sim_opts"]["output_dir"]
+        SSTSimulator.stats = self.configs["stats"]
          
     def add_specific_opts(self, pre_cmd):
         """ this handles ["other_opts"]
