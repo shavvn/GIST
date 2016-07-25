@@ -22,8 +22,8 @@
     "link_lat": ["10ns"]
   },
   "stats": {
-    "rtr_send_packet":["rtr", "send_packet_count"],
-    "l1_cache_hit":["l1_", "CacheHits"]
+    "rtr_send_packet":["rtr", "send_packet_count", " Count.u64"],
+    "l1_cache_hit":["l1_", "CacheHits", " Count.u64"]
   }
 
 }

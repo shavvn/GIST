@@ -125,8 +125,8 @@ class SSTSimulator(simulator.Simulator):
                                 stats_reader = csv.reader(stats_f)
                                 csv_header = next(stats_reader)
                                 for line in stats_reader:
-                                    cnt_index = csv_header.index(" Count.u64")
                                     for key, value in cls.stats.items():
+                                        cnt_index = csv_header.index(value[2])
                                         if value[0] in line[0]:
                                             if value[1] in line[1]:
                                                 stats[key] += int(line[cnt_index])
