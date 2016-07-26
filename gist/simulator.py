@@ -31,7 +31,50 @@ def permute_params(param_dict):
     # now param_dict_list has all combinations of params
     return param_dict_list
 
-
+    
+def get_keys_in_dict(nested_dict):
+    """
+    get keys that matters in a dictionary
+    e.g. for a nested dict 
+    p = {
+            "foo": [1, 2, 3],
+            "bar": {
+                "duh": [4, 5],
+                "huh": [6, 7, 8],
+                "hmm": [9]
+            }
+        }
+    should return foo, duh, huh, hmm 
+    since "bar" doesn't really do anything than holding other variables
+    """
+    keys = []
+    for key, value in nested_dict.iteritems():
+        if isinstance(value, dict):
+            keys += get_keys_in_dict(value)
+        else:
+            keys.append(key)
+    return keys
+    
+    
+def dump_param_summary(param_list, output_dir_base):
+    """
+    dump the params in the form of a csv file
+    """
+    with open(os.path.join(output_dir_base, "config.csv"), "wb") as fp:
+        writer = csv.writer(fp)
+        header = ["configs"]
+        header += get_keys_in_dict(param_list[0])
+        writer.writerow(header)
+        config_num = 0
+        for param in param_list:
+            row = ["config_%d"%config_num, ]
+            for key, value in param.items():
+                row.append(value)
+            writer.writerow(row)
+            config_num +=1
+        fp.close()
+    
+    
 class Simulation(object):
     """ Top Level Class
     Should be able to do something like:
@@ -99,7 +142,6 @@ class Simulator(object):
         return pre_cmd
 
     
-
     def get_tmp_param_files(self):
         """ Generate a temp file for each param possible
         :return: list of file pointers
@@ -111,24 +153,6 @@ class Simulator(object):
             tmp_fp.close()
             tmp_fp_list.append(tmp_fp)
         return tmp_fp_list
-    
-    def dump_param_summary(self, param_list, output_dir_base):
-        with open(os.path.join(output_dir_base, "config.csv"), "wb") as fp:
-            writer = csv.writer(fp)
-            header = ["configs"]
-            for key in param_list[0]:
-                header.append(key)
-            self.logger.debug("keys:")
-            self.logger.debug(header)
-            writer.writerow(header)
-            config_num = 0
-            for param in param_list:
-                row = ["config_%d"%config_num, ]
-                for key, value in param.items():
-                    row.append(value)
-                writer.writerow(row)
-                config_num +=1
-            fp.close()
             
     def run(self):
         """ run simulation by calling the exe
