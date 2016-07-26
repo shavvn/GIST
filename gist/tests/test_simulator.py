@@ -1,0 +1,32 @@
+import os
+import unittest
+from .. import simulator
+
+class SimulatorTest(unittest.TestCase):
+    
+    def setUp(self):
+        self.p = {
+            "foo": [1, 2, 3],
+            "bar": {
+                "duh": [4, 5],
+                "huh": [6, 7, 8],
+                "hmm": [9]
+            }
+        }
+    
+    def test_get_params_one_level(self):
+        p_get = simulator.permute_params(self.p["bar"])
+        self.assertIsInstance(p_get, list)
+        self.assertEqual(len(p_get), 6)
+        self.assertIn("duh", p_get[0])
+        self.assertIn("huh", p_get[0])
+        self.assertIn("hmm", p_get[0])
+        
+    def test_get_params_nested(self):
+        p_get = simulator.permute_params(self.p)
+        self.assertIsInstance(p_get, list)
+        self.assertEqual(len(p_get), 18)
+        self.assertIn("foo", p_get[0])
+        self.assertIn("bar", p_get[0])
+        self.assertIn("duh", p_get[0]["bar"])
+        

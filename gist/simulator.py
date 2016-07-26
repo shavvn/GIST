@@ -11,6 +11,27 @@ import tempfile
 import utils
 
 
+def permute_params(param_dict):
+    """
+    get all the combinations of params based on config["model_params"]
+    (basically a cross product
+    :return: a list of dict objects, each dict is an unique param set
+    """
+    params = {}
+    for key, value in param_dict.iteritems():
+        if isinstance(value, dict):
+            sub_list = permute_params(value)
+            params.update({key: sub_list})
+        else:
+            params.update({key: value})
+    param_list = itertools.product(*params.values())
+    param_dict_list = []
+    for v in param_list:
+        param_dict_list.append(dict(zip(params, v)))
+    # now param_dict_list has all combinations of params
+    return param_dict_list
+
+
 class Simulation(object):
     """ Top Level Class
     Should be able to do something like:
@@ -39,7 +60,7 @@ class Simulator(object):
         if config_file_name:
             with open(config_file_name) as config_f:
                 self.configs = utils.json_to_dict(config_f)
-                self.params = self.get_all_params(self.configs["model_params"])
+                self.params = permute_params(self.configs["model_params"])
                 self.sim_opts = self.configs["sim_opts"]
                 config_f.close()
         if not self.params:
@@ -77,19 +98,7 @@ class Simulator(object):
         self.logger.info("No simulator-specific opts!")
         return pre_cmd
 
-    def get_all_params(self, param_dict):
-        """
-        get all the combinations of params based on config["model_params"]
-        (basically a cross product
-        :return: a list of dict objects, each dict is an unique param set
-        """
-        params = param_dict
-        param_list = itertools.product(*params.values())
-        param_dict_list = []
-        for v in param_list:
-            param_dict_list.append(dict(zip(params, v)))
-        # now param_dict_list has all combinations of params
-        return param_dict_list
+    
 
     def get_tmp_param_files(self):
         """ Generate a temp file for each param possible
