@@ -30,3 +30,20 @@ class SimulatorTest(unittest.TestCase):
         self.assertIn("bar", p_get[0])
         self.assertIn("duh", p_get[0]["bar"])
         
+    def test_dump_param_header(self):
+        header_gold = set(["configs", "foo", "duh", "huh", "hmm"])
+        p_get = simulator.permute_params(self.p)
+        header = ["configs", ]
+        keys = simulator.get_keys_in_dict(p_get[0])
+        header = set((keys+header))
+        self.assertEqual(header, header_gold)
+        
+    def test_dump_param_summary(self):
+        sim = simulator.Simulator("examples/sst_example.json")
+        # p_get = simulator.permute_params(sim.params)
+        simulator.dump_param_summary(sim.params, "gist/tests/test_output")
+        with open("gist/tests/test_output/config.csv", "r") as smy, \
+             open("gist/tests/test_output/config_gold.csv", "r") as gold:
+            str_1 = smy.read()
+            str_2 = gold.read()
+            self.assertEqual(str_1, str_2)

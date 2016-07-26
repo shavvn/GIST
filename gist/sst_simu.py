@@ -42,7 +42,7 @@ class SSTSimulator(simulator.Simulator):
             if not os.path.exists(output_dir_base):
                 os.mkdir(output_dir_base)
                 self.logger.info("output dir not exist, creating for you!")
-        self.dump_param_summary(self.params, output_dir_base)
+        simulator.dump_param_summary(self.params, output_dir_base)
         tmp_fp_list = self.get_tmp_param_files()
         counter = 0
         for tmp_fp in tmp_fp_list:
