@@ -13,11 +13,13 @@ class SSTSimulator(simulator.Simulator):
     stats = {
         # should be in format of key:[col_1 key, col_2 key]
     }       
+    output_dir_base = ""
 
     def __init__(self, config_file=""):
         super(SSTSimulator, self).__init__(config_file)
         # self.output_dir = self.configs["sim_opts"]["output_dir"]
-        SSTSimulator.stats = self.configs["stats"]
+        SSTSimulator.stats = self.sim_opts["other_opts"]["stats"]
+        self.stats_opts = self.sim_opts["other_opts"]["stats_opts"]
          
     def add_specific_opts(self, pre_cmd):
         """ this handles ["other_opts"]
@@ -28,7 +30,15 @@ class SSTSimulator(simulator.Simulator):
         tgt = sst_opts["target_script"]
         cmd = pre_cmd + " " + tgt
         return cmd
-
+        
+    def _add_stats_opts_to_params(self):
+        """
+        add stats_opts to params dicts so that it could be passed to 
+        target scripts
+        """
+        for p in self.params:
+            p.update({"stats_opts":self.stats_opts})
+        
     def run(self):
         """ SST specific run command
         :return: none
@@ -37,13 +47,15 @@ class SSTSimulator(simulator.Simulator):
         output_dir_base = self.sim_opts["output_dir"]
         if output_dir_base == "time":  # generate output dir based on time
             output_dir_base = utils.get_time_str()
+            self.sim_opts["output_dir"] = output_dir_base
         output_as_file = self.sim_opts["output_as"] == "file"
         if output_as_file:
             if not os.path.exists(output_dir_base):
                 os.mkdir(output_dir_base)
                 self.logger.info("output dir not exist, creating for you!")
         simulator.dump_param_summary(self.params, output_dir_base)
-        tmp_fp_list = self.get_tmp_param_files()
+        self._add_stats_opts_to_params()
+        tmp_fp_list = simulator.get_tmp_param_files(self.params)
         counter = 0
         for tmp_fp in tmp_fp_list:
             # make sub dir first

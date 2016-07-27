@@ -1,6 +1,6 @@
 {
   "sim_opts":{
-    "sim_exe": "/opt/sst/bin/sst",
+    "sim_exe": "sst",
     "debug": false,
     "verbose": true,
     "mpi":false,
@@ -9,21 +9,36 @@
       "n": 4
     },
     "config_file": "temp",
+    "dump_config": true,
     "output_as": "file",
     "output_dir": "./output/",
     "other_opts": {
       "_comment":"this should contain simulator-specific options, use add_specific_opts to deal with this",
-      "target_script": "sst_tgt_example.py"
+      "target_script": "tgt_script.py",
+      "stats_opts": {
+        "enable": true,
+        "stats_type_opts": {
+          "type":"sst.HistogramStatistic",
+          "minvalue" : "10",
+          "binwidth" : "1000", 
+          "numbins"  : "20", 
+          "IncludeOutOfBounds" : "1",
+          "rate" : "100 ns",
+          "startat" : "100 ns",
+          "stopat" : "900 ns"
+        },
+        "output": "sst.statOutputCSV",
+        "enabled_components": ["all"]
+      },
+      "stats": {
+        "rtr_send_packet":["rtr", "send_packet_count", " Count.u64"],
+        "l1_cache_hit":["l1_", "CacheHits", " Count.u64"]
+      }
     }
   },
   "model_params":{
     "link_bw":["1GB/s", "2GB/s"],
     "num_peers": ["2", "4"],
     "link_lat": ["10ns"]
-  },
-  "stats": {
-    "rtr_send_packet":["rtr", "send_packet_count", " Count.u64"],
-    "l1_cache_hit":["l1_", "CacheHits", " Count.u64"]
   }
-
 }

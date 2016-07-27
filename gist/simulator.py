@@ -54,6 +54,20 @@ def get_keys_in_dict(nested_dict):
         else:
             keys.append(key)
     return keys
+
+
+def get_tmp_param_files(params_list):
+    """ 
+    Generate a temp file for each param possible
+    :return: list of file pointers
+    """
+    tmp_fp_list = []
+    for p in params_list:
+        tmp_fp = tempfile.NamedTemporaryFile(delete=False)
+        json.dump(p, tmp_fp)
+        tmp_fp.close()
+        tmp_fp_list.append(tmp_fp)
+    return tmp_fp_list
     
     
 def dump_param_summary(param_list, output_dir_base):
@@ -140,19 +154,6 @@ class Simulator(object):
         """
         self.logger.info("No simulator-specific opts!")
         return pre_cmd
-
-    
-    def get_tmp_param_files(self):
-        """ Generate a temp file for each param possible
-        :return: list of file pointers
-        """
-        tmp_fp_list = []
-        for p in self.params:
-            tmp_fp = tempfile.NamedTemporaryFile(delete=False)
-            json.dump(p, tmp_fp)
-            tmp_fp.close()
-            tmp_fp_list.append(tmp_fp)
-        return tmp_fp_list
             
     def run(self):
         """ run simulation by calling the exe
