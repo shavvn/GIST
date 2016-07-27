@@ -37,8 +37,17 @@
     }
   },
   "model_params":{
-    "link_bw":["1GB/s", "2GB/s"],
-    "num_peers": ["2", "4"],
-    "link_lat": ["10ns"]
+    "ep_type": ["miranda_ep"],
+    "topo_type": ["fattree"],
+    "topo_params": {
+      "link_bw":["1GB/s", "2GB/s"],
+      "link_lat": ["10ns"]
+    },
+    "ep_params": {
+      "miranda_params": {
+        "generator": ["miranda.GUPSGenerator"],
+        "total_requests": [1000]
+      }
+    }
   }
 }
