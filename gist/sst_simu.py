@@ -17,7 +17,7 @@ class SSTSimulator(simulator.Simulator):
     def __init__(self, config_file=""):
         super(SSTSimulator, self).__init__(config_file)
         # self.output_dir = self.configs["sim_opts"]["output_dir"]
-        SSTSimulator.stats = self.configs["stats"]
+        SSTSimulator.stats = self.sim_opts["other_opts"]["stats"]
          
     def add_specific_opts(self, pre_cmd):
         """ this handles ["other_opts"]
