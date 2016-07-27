@@ -1,5 +1,3 @@
-configs,link_lat,num_peers,link_bw
-config_0,10ns,2,1GB/s
-config_1,10ns,2,2GB/s
-config_2,10ns,4,1GB/s
-config_3,10ns,4,2GB/s
+configs,topo_type,ep_type,link_lat,link_bw,total_requests,generator
+config_0,fattree,miranda_ep,10ns,1GB/s,1000,miranda.GUPSGenerator
+config_1,fattree,miranda_ep,10ns,2GB/s,1000,miranda.GUPSGenerator

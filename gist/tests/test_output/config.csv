@@ -1,5 +1,0 @@
-configs,link_lat,num_peers,link_bw
-config_0,10ns,2,1GB/s
-config_1,10ns,2,2GB/s
-config_2,10ns,4,1GB/s
-config_3,10ns,4,2GB/s
