@@ -55,6 +55,34 @@ def get_keys_in_dict(nested_dict):
             keys.append(key)
     return keys
 
+    
+def get_key_val_in_nested_dict(nested_dict):
+    """
+    get key, value paies that matters in a dictionary
+    e.g. for a nested dict 
+    p = {
+            "foo": 1,
+            "bar": {
+                "duh": 4,
+                "huh": 6,
+                "hmm": 9
+            }
+        }
+    should return [foo, duh, huh, hmm ] and [1, 4, 6, 9]
+    since "bar" doesn't really do anything than holding other variables
+    """
+    keys = []
+    vals = []
+    for key, value in nested_dict.iteritems():
+        if isinstance(value, dict):
+            sub_keys, sub_vals = get_key_val_in_nested_dict(value)
+            keys += sub_keys
+            vals += sub_vals
+        else:
+            keys.append(key)
+            vals.append(value)
+    return keys, vals
+    
 
 def get_tmp_param_files(params_list):
     """ 
@@ -82,8 +110,9 @@ def dump_param_summary(param_list, output_dir_base):
         config_num = 0
         for param in param_list:
             row = ["config_%d"%config_num, ]
-            for key, value in param.items():
-                row.append(value)
+            keys, vals = get_key_val_in_nested_dict(param)
+            for val in vals:
+                row.append(val)
             writer.writerow(row)
             config_num +=1
         fp.close()

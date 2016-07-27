@@ -4,10 +4,6 @@ from .. import sst_simu
 
 
 class SSTTest(unittest.TestCase):
-    def setUp(self):
-        summary_csv = "gist/tests/test_output/summary.csv"
-        if os.path.exists(summary_csv):
-            os.remove(summary_csv)
             
     def test_init(self):
         sst = sst_simu.SSTSimulator("examples/sst_example.json")
@@ -21,7 +17,7 @@ class SSTTest(unittest.TestCase):
 
     def test_params_enum(self):
         sst = sst_simu.SSTSimulator("examples/sst_example.json")
-        self.assertEqual(len(sst.params), 4)
+        self.assertEqual(len(sst.params), 2)
         
     def test_add_stats_opts_to_params(self):
         sst = sst_simu.SSTSimulator("examples/sst_example.json")
