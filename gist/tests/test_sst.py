@@ -22,6 +22,13 @@ class SSTTest(unittest.TestCase):
     def test_params_enum(self):
         sst = sst_simu.SSTSimulator("examples/sst_example.json")
         self.assertEqual(len(sst.params), 4)
+        
+    def test_add_stats_opts_to_params(self):
+        sst = sst_simu.SSTSimulator("examples/sst_example.json")
+        sst._add_stats_opts_to_params()
+        self.assertIn("stats_opts", sst.params[0])
+        self.assertIn("enable", sst.params[0]["stats_opts"])
+        self.assertIn("stats_type_opts", sst.params[0]["stats_opts"])
     
     def test_get_ext_time(self):
         test_str = "Simulation is complete, simulated time: 12.3 ms"
