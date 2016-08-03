@@ -120,13 +120,15 @@ class SSTSimulator(simulator.Simulator):
                 config_dir = row[0]
                 sub_dir = os.path.join(output_dir_base, config_dir)
                 if os.path.exists(sub_dir):
+                    exe_time = ""
                     with open(os.path.join(sub_dir,"output.log"), "r") as log:
                         for line in log:
                             if "Simulation is complete" in line:
                                 exe_time = cls._get_exe_time(line)
                                 new_row.append(exe_time)
+                        if exe_time == "":
+                            new_row.append("")
                         log.close()
-                    # TODO read csvs
                     stats = {}
                     for key in cls.stats:
                         stats.update({key:0})
@@ -143,8 +145,6 @@ class SSTSimulator(simulator.Simulator):
                                             if value[1] in line[1]:
                                                 stats[key] += int(line[cnt_index])
                                 stats_f.close()
-                    if not exe_time:
-                        new_row.append("")
                     for key in sorted(cls.stats):
                         new_row.append(stats[key])
                     writer.writerow(new_row)
