@@ -18,7 +18,8 @@ class SSTSimulator(simulator.Simulator):
     def __init__(self, config_file=""):
         super(SSTSimulator, self).__init__(config_file)
         # self.output_dir = self.configs["sim_opts"]["output_dir"]
-        SSTSimulator.stats = self.sim_opts["other_opts"]["stats"]
+        self.other_opts = self.sim_opts["other_opts"]
+        SSTSimulator.stats = self.other_opts.pop("stats")
         self.stats_opts = self.sim_opts["other_opts"]["stats_opts"]
          
     def add_specific_opts(self, pre_cmd):
@@ -31,13 +32,13 @@ class SSTSimulator(simulator.Simulator):
         cmd = pre_cmd + " " + tgt
         return cmd
         
-    def _add_stats_opts_to_params(self):
+    def _add_other_opts_to_params(self):
         """
-        add stats_opts to params dicts so that it could be passed to 
-        target scripts
+        add other options that will be passed to target script
+        mostly from the "other_opts"
         """
         for p in self.params:
-            p.update({"stats_opts":self.stats_opts})
+            p.update(self.other_opts)
         
     def run(self):
         """ SST specific run command
@@ -54,7 +55,7 @@ class SSTSimulator(simulator.Simulator):
                 os.mkdir(output_dir_base)
                 self.logger.info("output dir not exist, creating for you!")
         simulator.dump_param_summary(self.params, output_dir_base)
-        self._add_stats_opts_to_params()
+        self._add_other_opts_to_params()
         tmp_fp_list = simulator.get_tmp_param_files(self.params)
         counter = 0
         for tmp_fp in tmp_fp_list:
