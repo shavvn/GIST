@@ -6,48 +6,46 @@
     "mpi":false,
     "mpi_opts": {
       "mpi_exe": "mpirun",
-      "n": 4
+      "n": 6
     },
     "config_file": "temp",
     "dump_config": true,
     "output_as": "file",
-    "output_dir": "./output/",
+    "output_dir": "time",
     "other_opts": {
-      "_comment":"this should contain simulator-specific options, use add_specific_opts to deal with this",
       "target_script": "tgt_script.py",
-      "stats_opts": {
-        "enable": true,
-        "stats_type_opts": {
-          "type":"sst.HistogramStatistic",
-          "minvalue" : "10",
-          "binwidth" : "1000", 
-          "numbins"  : "20", 
-          "IncludeOutOfBounds" : "1",
-          "rate" : "100 ns",
-          "startat" : "100 ns",
-          "stopat" : "900 ns"
-        },
-        "output": "sst.statOutputCSV",
-        "enabled_components": ["all"]
-      },
+      "stop_at": "0 ns",
       "stats": {
         "rtr_send_packet":["rtr", "send_packet_count", " Count.u64"],
-        "l1_cache_hit":["l1_", "CacheHits", " Count.u64"]
+        "packet_lat_count": ["TrafficGen", "packet_latency", " Count.u64"],
+        "packet_lat_sum": ["TrafficGen", "packet_latency", " Sum.u64"],
+        "port_stall_count": ["TrafficGen", "output_port_stalls", " Count.u64"],
+        "port_stall_sum": ["TrafficGen", "output_port_stalls", " Sum.u64"]
       }
     }
   },
   "model_params":{
-    "ep_type": ["miranda_ep"],
-    "topo_type": ["fattree"],
+    "ep_type": ["traffic_gen_ep"],
+    "topo_type": ["torus"],
+    "ep_params": {
+      "packets_to_send": [10000],
+      "injection_rate": [20, 100],
+      "message_rate":["1GHz"]
+    },
     "topo_params": {
-      "link_bw":["1GB/s", "2GB/s"],
+      "torus:shape":["4x4"],
+      "torus:width":["1x1"],
+      "torus:local_ports":[1],
+      "num_vns": [1],
+      "link_bw":["1GB/s"],
       "link_lat": ["10ns"]
     },
-    "ep_params": {
-      "miranda_params": {
-        "generator": ["miranda.GUPSGenerator"],
-        "total_requests": [1000]
-      }
+    "stats_params": {
+      "enable": [true],
+      "stats_type": ["sst.HistogramStatistic"],
+      "sample_time": [["0 us, 10us"], ["10 us", "20 us"], ["20 us", "30 us"]],
+      "output": ["sst.statOutputCSV"],
+      "enabled_components": ["all"]
     }
   }
 }
