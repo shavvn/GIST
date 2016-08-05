@@ -9,18 +9,163 @@ import simulator
 from subprocess import call
 
 
-class SSTSimulator(simulator.Simulator):
-    stats = {
-        # should be in format of key:[col_1 key, col_2 key]
-    }       
-    output_dir_base = ""
+def _convert_time_to_us(line):
+    """
+    This is not a general function but only deal with the specific output
+    format in the output log file of sst.
+    :param line: the line containing simulation time
+    :return: simulation time in us
+    """
+    tokens = line.split()
+    if len(tokens) < 6:  # output is probably broken
+        return "Error"
+    else:
+        exe_time = float(tokens[5])  # convert time to us
+        if tokens[6] == "us":
+            return int(exe_time)
+        elif tokens[6] == "ps":
+            return int(exe_time / 1000000)
+        elif tokens[6] == "ns":
+            return int(exe_time / 1000)
+        elif tokens[6] == "ms":
+            return int(exe_time * 1000)
+        elif tokens[6] == "s":
+            return int(exe_time * 1000000)
+        else:
+            return "Error"
 
+
+def _add_metrics_to_header(header, other_stats):
+    header.append("exe_time(us)")
+    for key in sorted(other_stats):
+        header.append(key)
+    return header
+
+
+def _get_ext_time_from_log(log_file):
+    exe_time = ""
+    with open(log_file, "r") as log:
+        for line in log:
+            if "Simulation is complete" in line:
+                exe_time = _convert_time_to_us(line)
+        log.close()
+        return exe_time
+
+
+def compile_accu_output(stats_dict, output_dir_base, 
+                        output_name="summary.csv"):
+    """
+    Accumulator type statistics, compile everthing together, e.g.
+    adding up all the same stats of one type of component specified by 
+    the stats_dict
+    The output is a compiled csv file 
+    """
+    with open(os.path.join(output_dir_base, "config.csv"), "r") as rfp, \
+            open(os.path.join(output_dir_base, output_name), "wb") as wfp:
+        reader = csv.reader(rfp)
+        header = next(reader)
+        header = _add_metrics_to_header(header, stats_dict)
+        writer = csv.writer(wfp)
+        writer.writerow(header)
+        for row in reader:
+            new_row = list(row)
+            config_dir = row[0]
+            sub_dir = os.path.join(output_dir_base, config_dir)
+            if os.path.exists(sub_dir):
+                log_file = os.path.join(sub_dir, "output.log")
+                exe_time = _get_ext_time_from_log(log_file)
+                new_row.append(exe_time)
+                stats = {}
+                for key in stats_dict:
+                    stats.update({key: 0})
+                for csv_file in os.listdir(sub_dir):
+                    if ".csv" in csv_file:
+                        stats_csv = os.path.join(sub_dir, csv_file)
+                        with open(stats_csv, "r") as stats_f:
+                            stats_reader = csv.reader(stats_f)
+                            csv_header = next(stats_reader)
+                            for line in stats_reader:
+                                for key, value in stats_dict.items():
+                                    cnt_index = csv_header.index(value[2])
+                                    if value[0] in line[0]:
+                                        if value[1] in line[1]:
+                                            stats[key] += int(line[cnt_index])
+                            stats_f.close()
+                for key in sorted(stats_dict):
+                    new_row.append(stats[key])
+                writer.writerow(new_row)
+            else:
+                pass
+        rfp.close()
+        wfp.close()
+
+
+def compile_histogram_outputs(stats_dict, output_dir_base,
+                              output_name="summary.csv"):
+    """
+    for histogram stats output, simply append everything
+    behind the configs
+    """
+    with open(os.path.join(output_dir_base, "config.csv"), "r") as rfp, \
+            open(os.path.join(output_dir_base, output_name), "wb") as wfp:
+        reader = csv.reader(rfp)
+        header = next(reader)
+        header.append("exe_time(us)")
+        writer = csv.writer(wfp)
+        # open up config_0 to complete the header
+        config_0_dir = os.path.join(output_dir_base, "config_0")
+        stats_csv_file = ""
+        if os.path.exists(config_0_dir):
+            for each_file in os.listdir(config_0_dir):
+                if ("stats" in each_file) and (".csv" in each_file):
+                    stats_csv_file = os.path.join(config_0_dir, each_file)
+                    break
+        else:
+            sys.exit(1)
+        if stats_csv_file:
+            with open(stats_csv_file, "r") as stats_fp:
+                header = header + next(stats_fp).split()
+                stats_fp.close()
+        writer.writerow(header)
+        for row in reader:
+            config_dir = row[0]
+            sub_dir = os.path.join(output_dir_base, config_dir)
+            if os.path.exists(sub_dir):
+                log_file = os.path.join(sub_dir, "output.log")
+                exe_time = _get_ext_time_from_log(log_file)
+                for csv_file in os.listdir(sub_dir):
+                    if ".csv" in csv_file:
+                        stats_csv = os.path.join(sub_dir, csv_file)
+                        with open(stats_csv, "r") as stats_f:
+                            stats_reader = csv.reader(stats_f)
+                            for line in stats_reader:
+                                new_row = list(row)
+                                new_row.append(exe_time)
+                                for key, value in stats_dict.items():
+                                    if value[0] in line[0]:
+                                        if value[1] in line[1]:
+                                            new_row = new_row + line
+                                            writer.writerow(new_row)
+                                            break
+                                        else:
+                                            pass
+                                    else:
+                                        pass
+                            stats_f.close()
+                    else:
+                        pass
+            else:
+                pass
+        rfp.close()
+        wfp.close()
+
+
+class SSTSimulator(simulator.Simulator):
     def __init__(self, config_file=""):
         super(SSTSimulator, self).__init__(config_file)
-        # self.output_dir = self.configs["sim_opts"]["output_dir"]
         self.other_opts = self.sim_opts["other_opts"]
-        SSTSimulator.stats = self.other_opts.pop("stats")
-        self.stats_opts = self.sim_opts["other_opts"]["stats_opts"]
+        self.stats = self.other_opts.pop("stats")
+        self.stats_params = self.params["stats_params"]
          
     def add_specific_opts(self, pre_cmd):
         """ this handles ["other_opts"]
@@ -37,7 +182,7 @@ class SSTSimulator(simulator.Simulator):
         add other options that will be passed to target script
         mostly from the "other_opts"
         """
-        for p in self.params:
+        for p in self.param_list:
             p.update(self.other_opts)
         
     def run(self):
@@ -45,31 +190,22 @@ class SSTSimulator(simulator.Simulator):
         :return: none
         """
         self.cmd = self.assemble_command()
-        output_dir_base = self.sim_opts["output_dir"]
-        if output_dir_base == "time":  # generate output dir based on time
-            output_dir_base = utils.get_time_str()
-            self.sim_opts["output_dir"] = output_dir_base
-        output_as_file = self.sim_opts["output_as"] == "file"
-        if output_as_file:
-            if not os.path.exists(output_dir_base):
-                os.mkdir(output_dir_base)
-                self.logger.info("output dir not exist, creating for you!")
-        simulator.dump_param_summary(self.params, output_dir_base)
+        simulator.dump_param_summary(self.param_list, self.output_base_dir)
         self._add_other_opts_to_params()
-        tmp_fp_list = simulator.get_tmp_param_files(self.params)
+        tmp_fp_list = simulator.get_tmp_param_files(self.param_list)
+        output_as_file = (self.sim_opts["output_as"] == "file")
         counter = 0
         for tmp_fp in tmp_fp_list:
             # make sub dir first
-            output_dir = os.path.join(output_dir_base, "config_%d"% counter)
-            os.mkdir(output_dir)
-            cmd = self.cmd # + " --output-directory %s"%output_dir 
+            sub_dir = os.path.join(self.output_base_dir, "config_%d"% counter)
+            os.mkdir(sub_dir)
+            cmd = self.cmd
             if self.sim_opts["dump_config"]:
                 cmd = cmd + " --output-config " + \
-                      os.path.join(output_dir, "config.py")
+                      os.path.join(sub_dir, "config.py")
             if output_as_file:
-                cmd = cmd + " --model-options " + "\"%s %s\""% \
-                      (tmp_fp.name, output_dir) + \
-                      " >> " + os.path.join(output_dir, "output.log")
+                cmd = cmd + " --model-options " + "\"%s %s\" >> %s" % \
+                      (tmp_fp.name, sub_dir, os.path.join(sub_dir, "output.log"))
             else:
                 cmd = cmd + " " + tmp_fp.name
             self.logger.debug("calling: %s" % cmd)
@@ -79,81 +215,14 @@ class SSTSimulator(simulator.Simulator):
                 call(cmd, shell=True)
             os.remove(tmp_fp.name)
             counter += 1
-   
-    @classmethod
-    def _add_metrics_to_header(cls, header, other_stats):
-        header.append("exe_time(us)")
-        for key in sorted(other_stats):
-            header.append(key)
-        return header
-    
-    @classmethod 
-    def _get_exe_time(cls, line):
-        tokens = line.split()
-        if len(tokens) <6:  # output is probably broken 
-            return "Error"
-        else:
-            exe_time = float(tokens[5]) # unify time to us
-            if (tokens[6] == "us"):
-                return int(exe_time)
-            elif (tokens[6] == "ps"):
-                return int(exe_time/1000000)
-            elif (tokens[6] == "ns"):
-                return int(exe_time/1000)
-            elif (tokens[6] == "ms"):
-                return int(exe_time*1000)
-            elif (tokens[6] == "s"):
-                return int(exe_time*1000000)
-            else:
-                return "Error"
-    
-    @classmethod
-    def compile_output(cls, output_dir_base): 
-        with open(os.path.join(output_dir_base, "config.csv"), "r") as rfp, \
-             open(os.path.join(output_dir_base, "summary.csv"), "wb") as wfp:
-            reader = csv.reader(rfp)
-            header = next(reader)
-            header = cls._add_metrics_to_header(header, cls.stats)
-            writer = csv.writer(wfp)
-            writer.writerow(header)
-            for row in reader:
-                new_row = list(row)
-                config_dir = row[0]
-                sub_dir = os.path.join(output_dir_base, config_dir)
-                if os.path.exists(sub_dir):
-                    exe_time = ""
-                    with open(os.path.join(sub_dir,"output.log"), "r") as log:
-                        for line in log:
-                            if "Simulation is complete" in line:
-                                exe_time = cls._get_exe_time(line)
-                                new_row.append(exe_time)
-                        if exe_time == "":
-                            new_row.append("")
-                        log.close()
-                    stats = {}
-                    for key in cls.stats:
-                        stats.update({key:0})
-                    for csv_file in os.listdir(sub_dir):
-                        if ".csv" in csv_file:
-                            stats_csv = os.path.join(sub_dir, csv_file)
-                            with open(stats_csv, "r") as stats_f:
-                                stats_reader = csv.reader(stats_f)
-                                csv_header = next(stats_reader)
-                                for line in stats_reader:
-                                    for key, value in cls.stats.items():
-                                        cnt_index = csv_header.index(value[2])
-                                        if value[0] in line[0]:
-                                            if value[1] in line[1]:
-                                                stats[key] += int(line[cnt_index])
-                                stats_f.close()
-                    for key in sorted(cls.stats):
-                        new_row.append(stats[key])
-                    writer.writerow(new_row)
-                else:
-                    pass
-            rfp.close()
-            wfp.close()
-            
+
+    def compile_output(self):
+        if "sst.HistogramStatistic" in self.stats_params["stats_type"]:
+            compile_histogram_outputs(self.stats, self.output_base_dir)
+        else:  # accumulate type
+            compile_accu_output(self.stats, self.output_base_dir)
+
+
 if __name__ == "__main__":
     arg_parser = utils.ArgParser(sys.argv[1:])
     in_files = arg_parser.get_input_files(file_type="json")
