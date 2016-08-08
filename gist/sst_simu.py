@@ -305,7 +305,7 @@ class SSTSimulator(simulator.Simulator):
         counter = 0
         for tmp_fp in tmp_fp_list:
             # make sub dir first
-            sub_dir = os.path.join(self.output_base_dir, "config_%d"% counter)
+            sub_dir = os.path.join(self.output_base_dir, "config_%d" % counter)
             os.mkdir(sub_dir)
             cmd = self.cmd
             if self.sim_opts["dump_config"]:
