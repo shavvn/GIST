@@ -6,10 +6,11 @@ import os
 import sys
 import utils
 import simulator
+from collections import OrderedDict
 from subprocess import call
 
 
-def _convert_time_to_us(line):
+def get_exe_time_in_line(line):
     """
     This is not a general function but only deal with the specific output
     format in the output log file of sst.
@@ -47,7 +48,7 @@ def _get_ext_time_from_log(log_file):
     with open(log_file, "r") as log:
         for line in log:
             if "Simulation is complete" in line:
-                exe_time = _convert_time_to_us(line)
+                exe_time = get_exe_time_in_line(line)
         log.close()
         return exe_time
 
@@ -158,6 +159,113 @@ def compile_histogram_outputs(stats_dict, output_dir_base,
                 pass
         rfp.close()
         wfp.close()
+
+
+def compile_ember_output(log_name, output_dir_base,
+                         output_name="summary.csv"):
+    """
+    compile output from an ember output log file
+    :param log_name: name of log file
+    :param output_dir_base: the dir you want to output to
+    :param output_name: the name you want to output to, by default summary.csv
+    :return:
+    """
+    with open(log_name, "r") as log_fp, \
+            open(os.path.join(output_dir_base, output_name), "wb") as w_fp:
+        writer = csv.writer(w_fp)
+        header = ["config", ]
+        summary = []
+        sim_results = OrderedDict()
+        for line in log_fp:
+            tokens = line.split(" ")
+            if "EMBER: platform" in line:
+                if sim_results:
+                    summary.append(sim_results.copy())
+                    for key in sim_results:
+                        if key not in header:
+                            header.append(key)
+                    sim_results.clear()
+                    plat = tokens[-1]
+                    sim_results.update({"platform": plat})
+                else:
+                    plat = tokens[-1]
+                    sim_results.update({"platform": plat})
+                continue
+            if "EMBER: network" in line:
+                if "topology" in line:
+                    topo = tokens[2].split("=")[1]
+                    shape = tokens[3].split("=")[1]
+                    sim_results.update({"topo": topo, "shape": shape})
+                    continue
+                elif "BW" in line:
+                    bw = tokens[2].split("=")[1]
+                    packet_size = tokens[3].split("=")[1]
+                    flit_size = tokens[4].split("=")[1]
+                    sim_results.update({
+                        "bandwidth": bw,
+                        "packet_size": packet_size,
+                        "flit_size": flit_size
+                    })
+                    continue
+                else:
+                    pass
+            if "EMBER: numNodes" in line:
+                num_nodes = tokens[1].split("=")[1]
+                num_nics = tokens[2].split("=")[1]
+                sim_results.update({"num_nodes": num_nodes, "num_nics": num_nics})
+                continue
+            if "EMBER: Job:" in line:
+                if ("Init" in tokens[-1]) or ("Fini" in tokens[-1]):
+                    continue
+                else:
+                    # TODO maybe need to customize for this
+                    work_load = tokens[4].split("'")[1]
+                    iteration = tokens[5].split("'")[1].split("=")[1]
+                    sim_results.update({
+                        "work_load": work_load,
+                        "iteration": iteration,
+                    })
+                    if len(tokens) >= 7:
+                        token_key = tokens[6].split("'")[1].split("=")[0]
+                        token_val = tokens[6].split("'")[1].split("=")[1]
+                        sim_results.update({
+                            token_key: token_val
+                        })
+                    continue
+            if "work_load" in sim_results:
+                if sim_results["work_load"] in line:
+                    if "latency" in line:
+                        lat_index = tokens.index("latency")
+                        lat = tokens[lat_index + 1]
+                        lat_unit = tokens[lat_index + 2]
+                        lat += lat_unit
+                        sim_results.update({"real_latency": lat})
+                    if "bandwidth" in line:
+                        bw_index = tokens.index("bandwidth")
+                        bw = tokens[bw_index + 1]
+                        bw_unit = tokens[bw_index + 2]
+                        bw += bw_unit
+                        sim_results.update({"real_bandwidth": bw})
+                    continue
+                else:
+                    pass
+            if "Simulation is complete" in line:
+                sim_time = str(get_exe_time_in_line(line))
+                sim_results.update({"exe_time(us)": sim_time})
+                continue
+        writer.writerow(header)
+        line_counter = 0
+        for config in summary:
+            config_str = "config_%d" % line_counter
+            line_counter += 1
+            new_row = [""] * len(header)
+            new_row[0] = config_str
+            for key, value in config.iteritems():
+                idx = header.index(key)
+                new_row[idx] = value.strip()
+            writer.writerow(new_row)
+        log_fp.close()
+        w_fp.close()
 
 
 class SSTSimulator(simulator.Simulator):
