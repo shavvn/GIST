@@ -10,6 +10,7 @@ setup(name="gist",
       install_requires=[
         "numpy",
         "matplotlib",
+        "pandas"
       ],
       classifiers=[
         "Development Status :: 0 dev release",
