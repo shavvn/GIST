@@ -10,6 +10,29 @@ from collections import OrderedDict
 from subprocess import call
 
 
+def convert_time_to_us(num_token, unit_token):
+    """
+    convert time to a us scale, note there might be precision loss
+    when converting from smaller scale (e.g. 10 ns -> 0 us)
+    :param num_token: string token, should only be a number
+    :param unit_token: string token, contains the time unit
+    :return: integer number if successfully converted, "" otherwise
+    """
+    num_token = float(num_token)
+    if "us" in unit_token:
+        return float(num_token)
+    elif "ps" in unit_token:
+        return float(num_token / 1000000)
+    elif "ns" in unit_token:
+        return float(num_token / 1000)
+    elif "ms" in unit_token:
+        return float(num_token * 1000)
+    elif "s" == unit_token:
+        return float(num_token * 1000000)
+    else:
+        return ""
+
+
 def get_exe_time_in_line(line):
     """
     This is not a general function but only deal with the specific output
@@ -232,27 +255,35 @@ def compile_ember_output(log_name, output_dir_base,
                             token_key: token_val
                         })
                     continue
+            sim_time = ""
             if "work_load" in sim_results:
                 if sim_results["work_load"] in line:
                     if "latency" in line:
                         lat_index = tokens.index("latency")
                         lat = tokens[lat_index + 1]
                         lat_unit = tokens[lat_index + 2]
-                        lat += lat_unit
-                        sim_results.update({"real_latency": lat})
+                        lat_in_us = str(convert_time_to_us(lat, lat_unit))
+                        sim_results.update({"real_latency(us)": lat_in_us})
                     if "bandwidth" in line:
                         bw_index = tokens.index("bandwidth")
                         bw = tokens[bw_index + 1]
-                        bw_unit = tokens[bw_index + 2]
-                        bw += bw_unit
-                        sim_results.update({"real_bandwidth": bw})
+                        sim_results.update({"real_bandwidth(GB/s)": bw})
+                    if "total time" in line:
+                        # sim time give by particular workload is more precise than total sim time
+                        time_idx = tokens.index("time") + 1
+                        unit_idx = time_idx + 1
+                        sim_time = str(convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
+                        sim_results.update({"exe_time(us)": sim_time})
                     continue
                 else:
                     pass
             if "Simulation is complete" in line:
-                sim_time = str(get_exe_time_in_line(line))
-                sim_results.update({"exe_time(us)": sim_time})
-                continue
+                if "exe_time(us)" in sim_results:
+                    continue
+                else:
+                    sim_time = str(get_exe_time_in_line(line))
+                    sim_results.update({"exe_time(us)": sim_time})
+                    continue
         writer.writerow(header)
         line_counter = 0
         for config in summary:
