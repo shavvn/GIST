@@ -1,4 +1,6 @@
+import os
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 plt.style.use('ggplot')
@@ -36,50 +38,60 @@ def mask(df, key, value):
 pd.DataFrame.mask = mask
 
 df = pd.read_csv("tests/ember_output/summary.csv")
+# TODO this feels like a pretty dangers fix...
+df = df.replace(np.nan, -1)
 
-plot_groups = df.groupby(["work_load", "messageSize", "iteration"])
+x_tick_key = "num_nics"
+plot_group_keys = ["work_load", "messageSize", "iteration", "messagesize"]
+y_value_keys = ["exe_time(us)", "real_latency(us)", "real_bandwidth"]
 
-groups = df.groupby(["topo", "work_load", "messageSize", "iteration"])
-
-for keys, group in groups:
-    print keys
-    group = group.sort("num_nics")
-    if all(group["topo"] == "torus"):
-        sub_groups = group.groupby(group["shape"].str.count("x"))
-        for count, sub_group in sub_groups:
-            topo = "torus-%dD" % (count + 1)
-            sub_group["topo"] = topo
-            print count
-    elif all(group["topo"] == "fattree"):
-        sub_groups = group.groupby(group["shape"].str.count(":"))
-        for count, sub_group in sub_groups:
-            topo = "fattree-%d" % (count + 1)
-            sub_group["topo"] = topo
-            print count
-    else:
-        pass
-
-# df = df.mask("topo", "torus").mask("work_load", "AllPingPong").mask("messageSize", 10000.0).mask("iteration", 10)
-
-grouped = df.groupby(df["shape"].str.count('x'))
-
-cnt = 0
-for count, group in grouped:
-    print count
-    print group.sort("num_nics")
-    plt.plot(group["num_nics"], group["exe_time(us)"], marker=markers[cnt])
-
-print grouped
-
-torus_3d = df[df["shape"].str.count("x") == 3]
-# torus_3d = df[df["shape"].str.contains(r'\d*x\d*x\d*')].sort("num_nics")
-torus_2d = df[df["shape"].str.contains(r'\A\d*x\d*\Z')].sort("num_nics")
-
-print torus_3d
-print torus_2d
-
-
-print "done"
-# torus_2d["exe_time(us)"].plot(xticks=torus_2d["num_nics"])
-# torus_3d["exe_time(us)"].plot(xticks=torus_2d["num_nics"])
+plot_groups = df.groupby(plot_group_keys)
+plot_cnt = 0
+# each of this group should be in a separate plot
+for plot_keys, each_plot_group in plot_groups:
+    print plot_keys[0]
+    # if needed, add sub_plot groups
+    fig, ax = plt.subplots(1, 1)
+    line_groups = each_plot_group.groupby(["topo"])
+    line_cnt = 0
+    labels = []
+    # each of this group should be a line in plot
+    for line_keys, each_line_group in line_groups:
+        group = each_line_group.sort(x_tick_key)
+        if all(group["topo"] == "torus"):
+            sub_groups = group.groupby(group["shape"].str.count("x"))
+            for count, sub_group in sub_groups:
+                topo = "torus-%dD" % (count + 1)
+                labels.append(topo)
+                sub_group["topo"] = topo
+                ax.plot(sub_group[x_tick_key], sub_group["exe_time(us)"],
+                        linewidth=2, marker=markers[line_cnt])
+                line_cnt += 1
+        elif all(group["topo"] == "fattree"):
+            sub_groups = group.groupby(group["shape"].str.count(":"))
+            for count, sub_group in sub_groups:
+                topo = "fattree-%d" % (count + 1)
+                labels.append(topo)
+                sub_group["topo"] = topo
+                ax.plot(sub_group[x_tick_key], sub_group["exe_time(us)"],
+                        linewidth=2, marker=markers[line_cnt])
+                line_cnt += 1
+        else:
+            topo = group["topo"].iloc[0]
+            labels.append(topo)
+            ax.plot(group[x_tick_key], group["exe_time(us)"],
+                    linewidth=2, marker=markers[line_cnt])
+            line_cnt += 1
+    title_text = ""
+    key_cnt = 0
+    for key in plot_group_keys:
+        title_text += "%s=%s_" % (key, str(plot_keys[key_cnt]))
+        key_cnt += 1
+    ax.set_title(title_text)
+    ax.legend(labels, loc="best")
+    output_name = "plot_%d.png" % plot_cnt
+    output_name = os.path.join("output", output_name)
+    plot_cnt += 1
+    fig.savefig(output_name, format="png")
+    fig.clf()
 
