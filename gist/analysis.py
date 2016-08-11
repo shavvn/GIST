@@ -122,15 +122,4 @@ def plot_everything(df,
 pd.DataFrame.mask = mask
 plt.style.use('ggplot')
 
-if __name__ == "__main__":
-    df = pd.read_csv("tests/ember_output/100k_summary.csv")
-    # TODO this feels like a pretty dangers fix...
-    df = df.replace(np.nan, -1)
-    x_labels = ["num_nics"]
-    y_labels = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
-    plot_class_keys = ["work_load", "messageSize", "iteration", "messagesize"]
-    line_class_keys = ["topo"]
-    df = separate_topos(df)
-    plot_everything(df, x_labels, y_labels, plot_class_keys, line_class_keys, "graphs")
-
 

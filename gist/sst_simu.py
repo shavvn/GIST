@@ -6,8 +6,12 @@ import os
 import sys
 import utils
 import simulator
+import numpy as np
+import pandas as pd
 from collections import OrderedDict
 from subprocess import call
+
+from gist import analysis
 
 
 def convert_time_to_us(num_token, unit_token):
@@ -299,6 +303,18 @@ def compile_ember_output(log_name, output_dir_base,
         w_fp.close()
 
 
+def plot_ember_summary(summary_csv, output_dir_base):
+    df = pd.read_csv(summary_csv)
+    df = df.replace(np.nan, -1)
+    x_labels = ["num_nics"]
+    y_labels = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
+    plot_class_keys = ["work_load", "messageSize", "iteration", "messagesize"]
+    line_class_keys = ["topo"]
+    df = analysis.separate_topos(df)
+    analysis.plot_everything(df, x_labels, y_labels, plot_class_keys,
+                             line_class_keys, output_dir_base)
+
+
 class SSTSimulator(simulator.Simulator):
     def __init__(self, config_file=""):
         super(SSTSimulator, self).__init__(config_file)
@@ -348,8 +364,6 @@ class SSTSimulator(simulator.Simulator):
             else:
                 cmd = cmd + " " + tmp_fp.name
             self.logger.debug("calling: %s" % cmd)
-            with open(tmp_fp.name, "r") as opened_fp:
-                self.logger.debug("tmpfile: %s" % opened_fp.read())
             if self.logger.getEffectiveLevel() > 10:  # run cmd if not DEBUG
                 call(cmd, shell=True)
             os.remove(tmp_fp.name)
