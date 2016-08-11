@@ -1,0 +1,13 @@
+config,platform,topo,shape,num_nics,num_nodes,bandwidth,flit_size,packet_size,work_load,iteration,messageSize,real_latency(us),real_bandwidth(GB/s),exe_time(us),count,messagesize
+config_0,default,torus,18x18x18,5832,5832,4GB/s,8B,2048B,AllPingPong,10,20000,33.295,0.600684,665.908,,
+config_1,default,torus,18x18x18,5832,5832,4GB/s,8B,2048B,AllPingPong,10,10000,15.13,0.660943,302.598,,
+config_2,default,torus,18x18x18,5832,5832,4GB/s,8B,2048B,AllPingPong,10,1,2.882,0.000347,57.64,,
+config_3,default,torus,18x18x18,5832,5832,4GB/s,8B,2048B,AllPingPong,10,0,2.882,0.000000,57.64,,
+config_24,default,torus,75x75,5625,5625,4GB/s,8B,2048B,AllPingPong,10,20000,114.002,0.175436,2280.03,,
+config_25,default,torus,75x75,5625,5625,4GB/s,8B,2048B,AllPingPong,10,10000,48.234,0.207324,964.674,,
+config_26,default,torus,75x75,5625,5625,4GB/s,8B,2048B,AllPingPong,10,1,12.242,0.000082,244.84,,
+config_258,default,fattree,"4,4:8,8:8,8:20",5120,5120,4GB/s,8B,2048B,Allreduce,10,,39.902,,461,1,
+config_259,default,fattree,"4,4:8,8:8,8:20",5120,5120,4GB/s,8B,2048B,Allreduce,1,,22.932,,84,1,
+config_260,default,fattree,"4,4:8,8:8,8:16",4096,4096,4GB/s,8B,2048B,Allreduce,10,,37.251,,430,1,
+config_2,default,dragonfly,51:13:13:26,114582,114582,4GB/s,8B,2048B,AllPingPong,10,1,2.024,0.000494,40.488,,
+config_3,default,dragonfly,51:13:13:26,114582,114582,4GB/s,8B,2048B,AllPingPong,10,0,2.022,0.000000,40.436,,
