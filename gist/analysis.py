@@ -8,7 +8,7 @@ plt.style.use('ggplot')
 
 markers = {  # this is a copy from matplotlib.markers.py ...
         '.': 'point',
-        ',': 'pixel',
+        # ',': 'pixel',
         'o': 'circle',
         'v': 'triangle_down',
         '^': 'triangle_up',
@@ -24,12 +24,12 @@ markers = {  # this is a copy from matplotlib.markers.py ...
         '*': 'star',
         'h': 'hexagon1',
         'H': 'hexagon2',
-        '+': 'plus',
-        'x': 'x',
+        # '+': 'plus',
+        # 'x': 'x',
         'D': 'diamond',
         'd': 'thin_diamond',
-        '|': 'vline',
-        '_': 'hline',
+        # '|': 'vline',
+        # '_': 'hline',
         }.keys()
 
 
@@ -68,7 +68,7 @@ for metric in y_value_keys:
                     sub_group["topo"] = topo
                     if not any(sub_group[metric] == -1):
                         ax.plot(sub_group[x_tick_key], sub_group[metric],
-                                linewidth=2, marker=markers[line_cnt], markersize=10)
+                                linewidth=2, marker=markers[line_cnt], markersize=8)
                     line_cnt += 1
             elif all(group["topo"] == "fattree"):
                 sub_groups = group.groupby(group["shape"].str.count(":"))
@@ -78,14 +78,14 @@ for metric in y_value_keys:
                     sub_group["topo"] = topo
                     if not any(sub_group[metric] == -1):
                         ax.plot(sub_group[x_tick_key], sub_group[metric],
-                                linewidth=2, marker=markers[line_cnt], markersize=10)
+                                linewidth=2, marker=markers[line_cnt], markersize=8)
                     line_cnt += 1
             else:
                 topo = group["topo"].iloc[0]
                 labels.append(topo)
                 if not any(group[metric] == -1):
                     ax.plot(group[x_tick_key], group[metric],
-                            linewidth=2, marker=markers[line_cnt], markersize=10)
+                            linewidth=2, marker=markers[line_cnt], markersize=8)
                 line_cnt += 1
         title_text = ""
         key_cnt = 0
