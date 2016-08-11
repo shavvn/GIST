@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-plt.style.use('ggplot')
 
 markers = {  # this is a copy from matplotlib.markers.py ...
         '.': 'point',
@@ -65,6 +64,19 @@ def plot_everything(df,
                     line_class_keys,
                     output_dir_base,
                     ):
+    """
+    plot everything from a DataFrame based on various keys given
+    :param df: pandas.DataFrame
+    :param x_labels: list, labels to be plotted on x-axis
+    :param y_labels: list, labels to be plotted on y-axis
+    :param plot_class_keys: list, keys that will be used to divide df into groups,
+                            each group represents the data to be plotted on a graph
+    :param line_class_keys: list, keys that will be used to divide df into groups,
+                            each group represents the data to be plotted as a line
+    :param output_dir_base: output directory, but this function will also created
+                            subdirectories based on x_labels and y_labels
+    :return:
+    """
     plot_groups = df.groupby(plot_class_keys)
     plot_cnt = 0
     for x_label in x_labels:
@@ -80,7 +92,7 @@ def plot_everything(df,
                 # each of this group should be a line in plot
                 for line_keys, each_line_group in line_groups:
                     group = each_line_group.sort_values(x_label)
-                    topo = group["topo"].iloc[0]
+                    topo = group[line_keys].iloc[0]
                     labels.append(topo)
                     if not all(group[y_label] == -1):
                         ax.plot(group[x_label], group[y_label],
@@ -108,15 +120,17 @@ def plot_everything(df,
                 plt.close(fig)
 
 pd.DataFrame.mask = mask
+plt.style.use('ggplot')
 
-df = pd.read_csv("tests/ember_output/100k_summary.csv")
-# TODO this feels like a pretty dangers fix...
-df = df.replace(np.nan, -1)
-x_labels = ["num_nics"]
-y_labels = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
-plot_class_keys = ["work_load", "messageSize", "iteration", "messagesize"]
-line_class_keys = ["topo"]
-df = separate_topos(df)
-plot_everything(df, x_labels, y_labels, plot_class_keys, line_class_keys, "graphs")
+if __name__ == "__main__":
+    df = pd.read_csv("tests/ember_output/100k_summary.csv")
+    # TODO this feels like a pretty dangers fix...
+    df = df.replace(np.nan, -1)
+    x_labels = ["num_nics"]
+    y_labels = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
+    plot_class_keys = ["work_load", "messageSize", "iteration", "messagesize"]
+    line_class_keys = ["topo"]
+    df = separate_topos(df)
+    plot_everything(df, x_labels, y_labels, plot_class_keys, line_class_keys, "graphs")
 
 
