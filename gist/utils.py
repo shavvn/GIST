@@ -60,6 +60,21 @@ def get_default_logger():
     return logging.getLogger("gist")
 
 
+def replace_special_char(input_str):
+    """
+    replace special characters in input string, this is useful when
+    generating output names that will be written to file system
+    :param input_str: input tring
+    :return:
+    """
+    spec_chars = ["(", ")", "/", "\\", ",", ".", "[", "]", "{", "}"]
+    new_string = input_str
+    for char in spec_chars:
+        if char in input_str:
+            new_string = new_string.replace(char, "_")
+    return new_string
+
+
 class ArgParser(object):
     """ Command line argument parser using built-in argparse
     takes the args string as input
