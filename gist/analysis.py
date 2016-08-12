@@ -88,21 +88,83 @@ def cal_torus_radix(shape_str):
     :return: radix, assuming width is 1 all the time
     """
     dim = shape_str.count("x")
-    radix = 2 * dim
+    radix = 2 * (dim + 1)
     return radix
 
 
-def calculate_radix(df):
-    if df["topo"] == "dragonfly":
-        df["radix"] = df[df["topo"] == "dragonfly"]["shape"].map(get_dragonfly_radix)
-    elif df["topo"] == "torus":
-        df["radix"] = df[df["topo"].str.contains("torus")]["shape"].map(cal_torus_radix)
-    elif df["topo"] == "fattree":
-        pass
-    elif df["topo"] == "diameter2":
-        pass
-    elif df["topo"] == "fishlite" or df["topo"] == "fishnet":
-        pass
+def cal_fattree_radix(shape_str):
+    """
+    radix for fattree is different from others since the radix
+    of each router might be different, so only return the max
+    here?
+    :param shape_str: formatted as "2,2:4,4:8"
+    :return: max radix of the routers
+    """
+    levels = shape_str.split(":")
+    max_radix = 0
+    for l in levels:
+        radix = sum(map(int, l.split(",")))
+        if radix > max_radix:
+            max_radix = radix
+    return max_radix
+
+
+def cal_dia2_radix(shape_str):
+    """
+    for diameter2 graphs shape is simply the local ports: host ports
+    :param shape_str: formatted as "local:host"
+    :return: radix
+    """
+    local, host = map(int, shape_str.split(":"))
+    radix = local + host
+    return radix
+
+
+def cal_fishlite_radix(shape_str):
+    """
+    for fishlite graphs radix is simply the local ports + host ports + 1
+    :param shape_str: formatted as "local:host"
+    :return: radix
+    """
+    local, host = map(int, shape_str.split(":"))
+    radix = local + host + 1
+    return radix
+
+
+def cal_fishnet_radix(shape_str):
+    """
+    for fishnet graphs radix is simply the local ports*2 + host ports
+    :param shape_str: formatted as "local:host"
+    :return: radix
+    """
+    local, host = map(int, shape_str.split(":"))
+    radix = local * 2 + host
+    return radix
+
+
+def calculate_radix(topo, shape):
+    """
+    given a topo and shape, calculate radix using the sub-functions
+    above, to use this function with DataFrame object, do:
+    df["radix"] = df.apply(lambda x: ana.calculate_radix(x["topo"], x["shape"]), axis=1)
+    :param topo: topology str
+    :param shape: shape str
+    :return: radix, 0 if cannot recognize
+    """
+    radix = 0
+    if topo == "dragonfly":
+        radix = get_dragonfly_radix(shape)
+    elif "torus" in topo:
+        radix = cal_torus_radix(shape)
+    elif "fattree" in topo:
+        radix = cal_fattree_radix(shape)
+    elif "diameter2" in topo:
+        radix = cal_dia2_radix(shape)
+    elif "fishlite" in topo:
+        radix = cal_fishlite_radix(shape)
+    elif "fishnet" in topo:
+        radix = cal_fishnet_radix(shape)
+    return radix
 
 
 def plot_everything(df,
