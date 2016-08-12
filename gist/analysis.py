@@ -81,11 +81,22 @@ def get_dragonfly_radix(shape_str):
     return radix
 
 
+def cal_torus_radix(shape_str):
+    """
+    return radix for a given shape of a Torus network
+    :param shape_str: formatted as "4x4x4"
+    :return: radix, assuming width is 1 all the time
+    """
+    dim = shape_str.count("x")
+    radix = 2 * dim
+    return radix
+
+
 def calculate_radix(df):
     if df["topo"] == "dragonfly":
         df["radix"] = df[df["topo"] == "dragonfly"]["shape"].map(get_dragonfly_radix)
     elif df["topo"] == "torus":
-        pass
+        df["radix"] = df[df["topo"].str.contains("torus")]["shape"].map(cal_torus_radix)
     elif df["topo"] == "fattree":
         pass
     elif df["topo"] == "diameter2":
