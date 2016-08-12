@@ -306,13 +306,15 @@ def compile_ember_output(log_name, output_dir_base,
 def plot_ember_summary(summary_csv, output_dir_base):
     df = pd.read_csv(summary_csv)
     df = df.replace(np.nan, -1)
+    # df["radix"] = df.apply(lambda x: analysis.calculate_radix(x["topo"], x["shape"]),
+    #                        axis=1)
     x_labels = ["num_nics"]
     y_labels = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
     plot_class_keys = ["work_load", "messageSize", "iteration", "messagesize"]
-    line_class_keys = ["topo"]
+    line_key = "topo"
     df = analysis.separate_topos(df)
     analysis.plot_everything(df, x_labels, y_labels, plot_class_keys,
-                             line_class_keys, output_dir_base)
+                             line_key, output_dir_base)
 
 
 class SSTSimulator(simulator.Simulator):

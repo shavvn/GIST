@@ -171,7 +171,7 @@ def plot_everything(df,
                     x_labels,
                     y_labels,
                     plot_class_keys,
-                    line_class_keys,
+                    line_key,
                     output_dir_base,
                     ):
     """
@@ -181,7 +181,7 @@ def plot_everything(df,
     :param y_labels: list, labels to be plotted on y-axis
     :param plot_class_keys: list, keys that will be used to divide df into groups,
                             each group represents the data to be plotted on a graph
-    :param line_class_keys: list, keys that will be used to divide df into groups,
+    :param line_key: list, keys that will be used to divide df into groups,
                             each group represents the data to be plotted as a line
     :param output_dir_base: output directory, but this function will also created
                             subdirectories based on x_labels and y_labels
@@ -193,16 +193,15 @@ def plot_everything(df,
         for y_label in y_labels:
             # each of this group should be in a separate plot
             for plot_keys, each_plot_group in plot_groups:
-                print plot_keys[0]
                 # if needed, add sub_plot groups, but let's not do it now...
                 fig, ax = plt.subplots(1, 1)
-                line_groups = each_plot_group.groupby(line_class_keys)
+                line_groups = each_plot_group.groupby(line_key)
                 line_cnt = 0
                 labels = []
                 # each of this group should be a line in plot
                 for line_keys, each_line_group in line_groups:
                     group = each_line_group.sort_values(x_label)
-                    topo = group[line_keys].iloc[0]
+                    topo = group.iloc[0][line_key]
                     labels.append(topo)
                     if not all(group[y_label] == -1):
                         ax.plot(group[x_label], group[y_label],
