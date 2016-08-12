@@ -1,7 +1,6 @@
 import os
 import utils
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -55,6 +54,44 @@ def separate_topos(df):
             df.ix[(df["topo"] == "fattree") & (df["shape"].str.count(":") == x),
                   "topo"] = "fattree_%d" % (x + 1)
     return df
+
+
+def cal_dragonfly_radix(shape_str):
+    """
+    This works for dragonfly shapes formatted as
+    PxHxA
+    :param shape_str: "PxHxA"
+    :return: radix
+    """
+    nums = shape_str.split("x")
+    nums = map(int, nums)
+    radix = sum(nums) - 1
+    return radix
+
+
+def get_dragonfly_radix(shape_str):
+    """
+    This works for dragonfly shapes formatted as
+    R:P:H:A, where R is the already calculated radix
+    so grep it and return
+    :param shape_str: R:P:H:A
+    :return: radix
+    """
+    radix = int(shape_str.split(":")[0])
+    return radix
+
+
+def calculate_radix(df):
+    if df["topo"] == "dragonfly":
+        df["radix"] = df[df["topo"] == "dragonfly"]["shape"].map(get_dragonfly_radix)
+    elif df["topo"] == "torus":
+        pass
+    elif df["topo"] == "fattree":
+        pass
+    elif df["topo"] == "diameter2":
+        pass
+    elif df["topo"] == "fishlite" or df["topo"] == "fishnet":
+        pass
 
 
 def plot_everything(df,
