@@ -167,13 +167,13 @@ def calculate_radix(topo, shape):
     return radix
 
 
-def plot_everything(df,
-                    x_labels,
-                    y_labels,
-                    plot_class_keys,
-                    line_key,
-                    output_dir_base,
-                    ):
+def plot_all_lines(df,
+                   x_labels,
+                   y_labels,
+                   plot_class_keys,
+                   line_key,
+                   output_dir_base,
+                   ):
     """
     plot everything from a DataFrame based on various keys given
     :param df: pandas.DataFrame
@@ -181,7 +181,7 @@ def plot_everything(df,
     :param y_labels: list, labels to be plotted on y-axis
     :param plot_class_keys: list, keys that will be used to divide df into groups,
                             each group represents the data to be plotted on a graph
-    :param line_key: list, keys that will be used to divide df into groups,
+    :param line_key: str, key that will be used to divide df into groups,
                             each group represents the data to be plotted as a line
     :param output_dir_base: output directory, but this function will also created
                             subdirectories based on x_labels and y_labels

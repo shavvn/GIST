@@ -259,7 +259,6 @@ def compile_ember_output(log_name, output_dir_base,
                             token_key: token_val
                         })
                     continue
-            sim_time = ""
             if "work_load" in sim_results:
                 if sim_results["work_load"] in line:
                     if "latency" in line:
@@ -313,8 +312,8 @@ def plot_ember_summary(summary_csv, output_dir_base):
     plot_class_keys = ["work_load", "messageSize", "iteration", "messagesize"]
     line_key = "topo"
     df = analysis.separate_topos(df)
-    analysis.plot_everything(df, x_labels, y_labels, plot_class_keys,
-                             line_key, output_dir_base)
+    analysis.plot_all_lines(df, x_labels, y_labels, plot_class_keys,
+                            line_key, output_dir_base)
 
 
 class SSTSimulator(simulator.Simulator):
