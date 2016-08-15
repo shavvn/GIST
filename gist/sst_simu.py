@@ -371,11 +371,13 @@ class SSTSimulator(simulator.Simulator):
             counter += 1
 
     def compile_output(self):
-        if "sst.HistogramStatistic" in self.stats_params["stats_type"]:
-            compile_histogram_outputs(self.stats, self.output_base_dir)
-        else:  # accumulate type
-            compile_accu_output(self.stats, self.output_base_dir)
-
+        if self.param_list[0]["ep_type"] != "ember_ep":
+            if "sst.HistogramStatistic" in self.stats_params["stats_type"]:
+                compile_histogram_outputs(self.stats, self.output_base_dir)
+            else:  # accumulate type
+                compile_accu_output(self.stats, self.output_base_dir)
+        else:
+            pass
 
 if __name__ == "__main__":
     arg_parser = utils.ArgParser(sys.argv[1:])
