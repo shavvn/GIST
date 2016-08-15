@@ -29,7 +29,31 @@ class SimulatorTest(unittest.TestCase):
         self.assertIn("foo", p_get[0])
         self.assertIn("bar", p_get[0])
         self.assertIn("duh", p_get[0]["bar"])
-        
+
+    def test_get_params_from_list_of_dicts(self):
+        p = {
+            "ep": ["ember"],
+            "work:" [
+                {
+                    "type": "a",
+                    "params": {
+                        "bw": ["1GB/s", "2GB/s"],
+                        "lat": ["1ns"]
+                    }
+                },
+                {
+                    "type": "b",
+                    "params": {
+                        "bw": ["3GB/s", "4GB/s"],
+                        "lat": ["1ns"]
+                    }
+                }
+            ]
+        }
+        p_get = simulator.permute_params(p)
+        self.assertIsInstance(p_get, list)
+        self.assertEqual(len(p_get), 4)
+
     def test_dump_param_header(self):
         header_gold = set(["configs", "foo", "duh", "huh", "hmm"])
         p_get = simulator.permute_params(self.p)

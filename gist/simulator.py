@@ -19,11 +19,24 @@ def permute_params(param_dict):
     """
     params = {}
     for key, value in param_dict.iteritems():
+        # if value is a dict, keep the key and unfold it
         if isinstance(value, dict):
             sub_list = permute_params(value)
             params.update({key: sub_list})
         else:
-            params.update({key: value})
+            if isinstance(value, list):
+                # if all the items in a list are dicts, unfold them
+                # and put into one list object  
+                if all(isinstance(item, dict) for item in value):
+                    sub_list = []
+                    for item in value:
+                        for sub_params in permute_params(item):
+                            sub_list.append(sub_params)
+                    params.update({key:sub_list})
+                else:
+                    params.update({key: value})
+            else:
+                params.update({key: value})
     param_list = itertools.product(*params.values())
     param_dict_list = []
     for v in param_list:
