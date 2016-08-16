@@ -213,6 +213,9 @@ def get_ember_output_from_line(line):
         unit_idx = time_idx + 1
         sim_time = str(convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
         results["work_time(us)"] = sim_time
+    if "Simulation is complete" in line:
+        exe_time = str(get_exe_time_in_line(line))
+        results["exe_time(us)"] = exe_time
     return results
 
 
@@ -436,6 +439,9 @@ class SSTSimulator(simulator.Simulator):
             results = get_ember_output_from_file(log_name)
             d = param.copy()
             d.update(results)
+            # TODO it works but it might be better to use pandas hierarchical index?
+            keys, vals = simulator.get_key_val_in_nested_dict(d)
+            d = dict(zip(keys, vals))
             dict_list.append(d)
             cnt += 1
         self.pd = pd.DataFrame(dict_list)
