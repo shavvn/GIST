@@ -83,6 +83,8 @@ def get_key_val_in_nested_dict(nested_dict):
         }
     should return [foo, duh, huh, hmm ] and [1, 4, 6, 9]
     since "bar" doesn't really do anything than holding other variables
+    :param nested_dict: dictionary with nested structure
+    :return: 2 lists, first is list of keys and second is their values
     """
     keys = []
     vals = []
@@ -116,7 +118,7 @@ def dump_param_summary(param_list, output_dir_base):
     dump all the params in the form of a csv file named "config.csv"
     :param param_list: list of different params
     :param output_dir_base: where the output will be
-    :return:
+    :return: None
     """
     with open(os.path.join(output_dir_base, "config.csv"), "wb") as fp:
         writer = csv.writer(fp)
