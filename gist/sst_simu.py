@@ -188,6 +188,48 @@ def compile_histogram_outputs(stats_dict, output_dir_base,
         wfp.close()
 
 
+def get_ember_output_from_line(line):
+    """
+    examine a line to see if it contains certain keywords, then find the
+    results from this line and return a dict of them
+    always assuming the result format is "metric number unit"
+    :param line: input line
+    :return: a dict with key value pairs, {} if nothing found
+    """
+    tokens = line.split(" ")
+    results = {}
+    if "latency" in line:
+        lat_index = tokens.index("latency")
+        lat = tokens[lat_index + 1]
+        lat_unit = tokens[lat_index + 2]
+        lat_in_us = str(convert_time_to_us(lat, lat_unit))
+        results["real_latency(us)"] = lat_in_us
+    if "bandwidth" in line:
+        bw_index = tokens.index("bandwidth")
+        bw = tokens[bw_index + 1]
+        results["real_bandwidth(GB/s)"] = bw
+    if "total time" in line:
+        time_idx = tokens.index("time") + 1
+        unit_idx = time_idx + 1
+        sim_time = str(convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
+        results["work_time(us)"] = sim_time
+    return results
+
+
+def get_ember_output_from_file(log_name):
+    """
+    this is simply a wrapper of get_ember_output_from_line to process a file
+    :param log_name: output log file, should ONLY contain ONE set of results
+    :return: dict
+    """
+    result = {}
+    with open(log_name, "r") as log_fp:
+        for line in log_fp:
+            result.update(get_ember_output_from_line(line))
+        log_fp.close()
+    return result
+
+
 def compile_ember_output(log_name, output_dir_base,
                          output_name="summary.csv"):
     """
@@ -322,7 +364,8 @@ class SSTSimulator(simulator.Simulator):
         self.other_opts = self.sim_opts["other_opts"]
         self.stats = self.other_opts.pop("stats")
         self.stats_params = self.params["stats_params"]
-         
+        self.pd = None
+
     def add_specific_opts(self, pre_cmd):
         """ this handles ["other_opts"]
         :param pre_cmd: the command before adding simulator specific opts
@@ -377,7 +420,27 @@ class SSTSimulator(simulator.Simulator):
             else:  # accumulate type
                 compile_accu_output(self.stats, self.output_base_dir)
         else:
-            pass
+            self.compile_ember_output()
+
+    def compile_ember_output(self):
+        """
+        Using pandas for the first time to dump output
+        feeling like a lot easier lol
+        :return: None
+        """
+        cnt = 0
+        dict_list = []
+        for param in self.param_list:
+            sub_dir = os.path.join(self.output_base_dir, "config_%d" % cnt)
+            log_name = os.path.join(sub_dir, "output.log")
+            results = get_ember_output_from_file(log_name)
+            d = param.copy()
+            d.update(results)
+            dict_list.append(d)
+            cnt += 1
+        self.pd = pd.DataFrame(dict_list)
+        output_name = os.path.join(self.output_base_dir, "summary.csv")
+        self.pd.to_csv(output_name)
 
 if __name__ == "__main__":
     arg_parser = utils.ArgParser(sys.argv[1:])
