@@ -33,7 +33,7 @@ class SimulatorTest(unittest.TestCase):
     def test_get_params_from_list_of_dicts(self):
         p = {
             "ep": ["ember"],
-            "work:" [
+            "work": [
                 {
                     "type": "a",
                     "params": {
