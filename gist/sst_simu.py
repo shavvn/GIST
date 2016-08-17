@@ -4,7 +4,8 @@ explore what interfaces should look like in this file
 import csv
 import os
 import sys
-import utils
+
+import gist.utils
 import simulator
 import numpy as np
 import pandas as pd
@@ -431,9 +432,9 @@ class SSTSimulator(simulator.Simulator):
         :return: none
         """
         self.cmd = self.assemble_command()
-        simulator.dump_param_summary(self.param_list, self.output_base_dir)
+        gist.utils.dump_param_summary(self.param_list, self.output_base_dir)
         self._add_other_opts_to_params()
-        tmp_fp_list = simulator.get_tmp_param_files(self.param_list)
+        tmp_fp_list = gist.utils.get_tmp_param_files(self.param_list)
         output_as_file = (self.sim_opts["output_as"] == "file")
         counter = 0
         for tmp_fp in tmp_fp_list:
@@ -475,7 +476,7 @@ class SSTSimulator(simulator.Simulator):
             d = param.copy()
             d.update(results)
             # TODO it works but it might be better to use pandas hierarchical index?
-            keys, vals = simulator.get_key_val_in_nested_dict(d)
+            keys, vals = gist.utils.get_key_val_in_nested_dict(d)
             d = dict(zip(keys, vals))
             dict_list.append(d)
             cnt += 1
@@ -497,16 +498,9 @@ class SSTSimulator(simulator.Simulator):
             results = get_ember_output_from_file(log_name)
             d = param.copy()
             d.update(results)
-            dict_list.append(simulator.flatten_dict(d))
+            dict_list.append(gist.utils.flatten_dict(d))
             cnt += 1
         self.df = pd.DataFrame(dict_list)
         output_name = os.path.join(self.output_base_dir, "summary.csv")
         self.df.to_csv(output_name)
 
-
-if __name__ == "__main__":
-    arg_parser = utils.ArgParser(sys.argv[1:])
-    in_files = arg_parser.get_input_files(file_type="json")
-    for fp in in_files:
-        sst_sim = SSTSimulator(fp)
-        sst_sim.run()

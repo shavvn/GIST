@@ -1,4 +1,7 @@
 import unittest
+
+import gist.utils
+
 from .. import simulator
 
 
@@ -15,7 +18,7 @@ class SimulatorTest(unittest.TestCase):
         }
     
     def test_get_params_one_level(self):
-        p_get = simulator.permute_params(self.p["bar"])
+        p_get = gist.utils.permute_params(self.p["bar"])
         self.assertIsInstance(p_get, list)
         self.assertEqual(len(p_get), 6)
         self.assertIn("duh", p_get[0])
@@ -23,7 +26,7 @@ class SimulatorTest(unittest.TestCase):
         self.assertIn("hmm", p_get[0])
         
     def test_get_params_nested(self):
-        p_get = simulator.permute_params(self.p)
+        p_get = gist.utils.permute_params(self.p)
         self.assertIsInstance(p_get, list)
         self.assertEqual(len(p_get), 18)
         self.assertIn("foo", p_get[0])
@@ -50,15 +53,15 @@ class SimulatorTest(unittest.TestCase):
                 }
             ]
         }
-        p_get = simulator.permute_params(p)
+        p_get = gist.utils.permute_params(p)
         self.assertIsInstance(p_get, list)
         self.assertEqual(len(p_get), 4)
 
     def test_dump_param_header(self):
         header_gold = set(["configs", "foo", "duh", "huh", "hmm"])
-        p_get = simulator.permute_params(self.p)
+        p_get = gist.utils.permute_params(self.p)
         header = ["configs", ]
-        keys = simulator.get_keys_in_dict(p_get[0])
+        keys = gist.utils.get_keys_in_dict(p_get[0])
         header = set((keys+header))
         self.assertEqual(header, header_gold)
 

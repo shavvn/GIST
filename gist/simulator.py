@@ -2,156 +2,11 @@
 It's gonna take a while to figure out the structure of this project.
 We will see...
 """
-import itertools
-import json
 import os
 import sys
-import tempfile
-import utils
-import pandas as pd
+import gist.utils
 
 
-def permute_params(param_dict):
-    """
-    get all the combinations of params based on config["model_params"]
-    (basically a cross product
-    :return: a list of dict objects, each dict is an unique param set
-    """
-    params = {}
-    for key, value in param_dict.iteritems():
-        # if value is a dict, keep the key and unfold it
-        if isinstance(value, dict):
-            sub_list = permute_params(value)
-            params.update({key: sub_list})
-        else:
-            if isinstance(value, list):
-                # if all the items in a list are dicts, unfold them
-                # and put into one list object  
-                if all(isinstance(item, dict) for item in value):
-                    sub_list = []
-                    for item in value:
-                        for sub_params in permute_params(item):
-                            sub_list.append(sub_params)
-                    params.update({key:sub_list})
-                else:
-                    params.update({key: value})
-            else:
-                params.update({key: value})
-    param_list = itertools.product(*params.values())
-    param_dict_list = []
-    for v in param_list:
-        param_dict_list.append(dict(zip(params, v)))
-    # now param_dict_list has all combinations of params
-    return param_dict_list
-
-    
-def get_keys_in_dict(nested_dict):
-    """
-    get keys that matters in a dictionary
-    e.g. for a nested dict 
-    p = {
-            "foo": [1, 2, 3],
-            "bar": {
-                "duh": [4, 5],
-                "huh": [6, 7, 8],
-                "hmm": [9]
-            }
-        }
-    should return foo, duh, huh, hmm 
-    since "bar" doesn't really do anything than holding other variables
-    """
-    keys = []
-    for key, value in nested_dict.iteritems():
-        if isinstance(value, dict):
-            keys += get_keys_in_dict(value)
-        else:
-            keys.append(key)
-    return keys
-
-    
-def get_key_val_in_nested_dict(nested_dict):
-    """
-    get key, value paies that matters in a dictionary
-    e.g. for a nested dict 
-    p = {
-            "foo": 1,
-            "bar": {
-                "duh": 4,
-                "huh": 6,
-                "hmm": 9
-            }
-        }
-    should return [foo, duh, huh, hmm ] and [1, 4, 6, 9]
-    since "bar" doesn't really do anything than holding other variables
-    :param nested_dict: dictionary with nested structure
-    :return: 2 lists, first is list of keys and second is their values
-    """
-    keys = []
-    vals = []
-    for key, value in nested_dict.iteritems():
-        if isinstance(value, dict):
-            sub_keys, sub_vals = get_key_val_in_nested_dict(value)
-            keys += sub_keys
-            vals += sub_vals
-        else:
-            keys.append(key)
-            vals.append(value)
-    return keys, vals
-
-
-def flatten_dict(nested_d):
-    """
-    flatten nested dict, NOTE some of the keys will be lost
-    :param nested_d: nested dict
-    :return: flattened dict
-    """
-    if isinstance(nested_d, dict):
-        keys, vals = get_key_val_in_nested_dict(nested_d)
-        return dict(zip(keys, vals))
-    else:
-        return {}
-
-
-def flatten_dict_list(dict_list):
-    """
-    Given a list of nested dict objects, flatten each dict
-    to only one level of key:value pairs, NOTE some of the
-    keys will be lost
-    :param dict_list: input of nested dict list
-    :return: flattened list of dicts
-    """
-    result = []
-    for d in dict_list:
-        result.append(flatten_dict(d))
-    return result
-
-
-def get_tmp_param_files(params_list):
-    """ 
-    Generate a temp file for each param possible
-    :return: list of file pointers
-    """
-    tmp_fp_list = []
-    for p in params_list:
-        tmp_fp = tempfile.NamedTemporaryFile(delete=False)
-        json.dump(p, tmp_fp)
-        tmp_fp.close()
-        tmp_fp_list.append(tmp_fp)
-    return tmp_fp_list
-    
-    
-def dump_param_summary(param_list, output_dir_base):
-    """
-    dump all the params in the form of a csv file named "config.csv"
-    :param param_list: list of different params
-    :param output_dir_base: where the output will be
-    :return: None
-    """
-    df = pd.DataFrame(flatten_dict_list(param_list))
-    output_name = os.path.join(output_dir_base, "config.csv")
-    df.to_csv(output_name)
-
-    
 class Simulation(object):
     """ Top Level Class
     Should be able to do something like:
@@ -177,13 +32,13 @@ class Simulator(object):
         self.param_list = []
         self.sim_opts = {}
         self.params = {}
-        self.logger = utils.get_default_logger()
+        self.logger = gist.utils.get_default_logger()
         if config_file_name:
             with open(config_file_name) as config_f:
-                self.configs = utils.json_to_dict(config_f)
+                self.configs = gist.utils.json_to_dict(config_f)
                 self.sim_opts = self.configs["sim_opts"]
                 self.params = self.configs["model_params"]
-                self.param_list = permute_params(self.params)
+                self.param_list = gist.utils.permute_params(self.params)
                 config_f.close()
         if not self.param_list:
             self.logger.fatal("Did not load valid params!")
@@ -201,7 +56,7 @@ class Simulator(object):
         if self.sim_opts["output_as"] == "file":
             if os.path.split(self.output_base_dir)[1] == "time":
                 base_dir = os.path.split(self.output_base_dir)[0]
-                time_dir = "time-" + utils.get_time_str()
+                time_dir = "time-" + gist.utils.get_time_str()
                 self.output_base_dir = os.path.join(base_dir, time_dir)
             elif os.path.split(self.output_base_dir)[1] == "hash":
                 # TODO create output dir based on hash val of config

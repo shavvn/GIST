@@ -1,9 +1,13 @@
 import argparse
+import itertools
 import json
 import logging
 import os
 import sys
+import tempfile
 import time
+
+import pandas as pd
 
 
 def get_time_str():
@@ -189,3 +193,144 @@ class ArgParser(object):
                                      creating one for you...")
                 os.mkdir(self.args.output_dir)
         return self.args.output_dir
+
+
+def permute_params(param_dict):
+    """
+    get all the combinations of params based on config["model_params"]
+    (basically a cross product
+    :return: a list of dict objects, each dict is an unique param set
+    """
+    params = {}
+    for key, value in param_dict.iteritems():
+        # if value is a dict, keep the key and unfold it
+        if isinstance(value, dict):
+            sub_list = permute_params(value)
+            params.update({key: sub_list})
+        else:
+            if isinstance(value, list):
+                # if all the items in a list are dicts, unfold them
+                # and put into one list object
+                if all(isinstance(item, dict) for item in value):
+                    sub_list = []
+                    for item in value:
+                        for sub_params in permute_params(item):
+                            sub_list.append(sub_params)
+                    params.update({key:sub_list})
+                else:
+                    params.update({key: value})
+            else:
+                params.update({key: value})
+    param_list = itertools.product(*params.values())
+    param_dict_list = []
+    for v in param_list:
+        param_dict_list.append(dict(zip(params, v)))
+    # now param_dict_list has all combinations of params
+    return param_dict_list
+
+
+def get_keys_in_dict(nested_dict):
+    """
+    get keys that matters in a dictionary
+    e.g. for a nested dict
+    p = {
+            "foo": [1, 2, 3],
+            "bar": {
+                "duh": [4, 5],
+                "huh": [6, 7, 8],
+                "hmm": [9]
+            }
+        }
+    should return foo, duh, huh, hmm
+    since "bar" doesn't really do anything than holding other variables
+    """
+    keys = []
+    for key, value in nested_dict.iteritems():
+        if isinstance(value, dict):
+            keys += get_keys_in_dict(value)
+        else:
+            keys.append(key)
+    return keys
+
+
+def get_key_val_in_nested_dict(nested_dict):
+    """
+    get key, value paies that matters in a dictionary
+    e.g. for a nested dict
+    p = {
+            "foo": 1,
+            "bar": {
+                "duh": 4,
+                "huh": 6,
+                "hmm": 9
+            }
+        }
+    should return [foo, duh, huh, hmm ] and [1, 4, 6, 9]
+    since "bar" doesn't really do anything than holding other variables
+    :param nested_dict: dictionary with nested structure
+    :return: 2 lists, first is list of keys and second is their values
+    """
+    keys = []
+    vals = []
+    for key, value in nested_dict.iteritems():
+        if isinstance(value, dict):
+            sub_keys, sub_vals = get_key_val_in_nested_dict(value)
+            keys += sub_keys
+            vals += sub_vals
+        else:
+            keys.append(key)
+            vals.append(value)
+    return keys, vals
+
+
+def flatten_dict(nested_d):
+    """
+    flatten nested dict, NOTE some of the keys will be lost
+    :param nested_d: nested dict
+    :return: flattened dict
+    """
+    if isinstance(nested_d, dict):
+        keys, vals = get_key_val_in_nested_dict(nested_d)
+        return dict(zip(keys, vals))
+    else:
+        return {}
+
+
+def flatten_dict_list(dict_list):
+    """
+    Given a list of nested dict objects, flatten each dict
+    to only one level of key:value pairs, NOTE some of the
+    keys will be lost
+    :param dict_list: input of nested dict list
+    :return: flattened list of dicts
+    """
+    result = []
+    for d in dict_list:
+        result.append(flatten_dict(d))
+    return result
+
+
+def get_tmp_param_files(params_list):
+    """
+    Generate a temp file for each param possible
+    :return: list of file pointers
+    """
+    tmp_fp_list = []
+    for p in params_list:
+        tmp_fp = tempfile.NamedTemporaryFile(delete=False)
+        json.dump(p, tmp_fp)
+        tmp_fp.close()
+        tmp_fp_list.append(tmp_fp)
+    return tmp_fp_list
+
+
+def dump_param_summary(param_list, output_dir_base):
+    """
+    dump all the params in the form of a csv file named "config.csv"
+    :param param_list: list of different params
+    :param output_dir_base: where the output will be
+    :return: None
+    """
+    df = pd.DataFrame(flatten_dict_list(param_list))
+    output_name = os.path.join(output_dir_base, "config.csv")
+    df.to_csv(output_name)
