@@ -2,13 +2,13 @@
 It's gonna take a while to figure out the structure of this project.
 We will see...
 """
-import csv
 import itertools
 import json
 import os
 import sys
 import tempfile
 import utils
+import pandas as pd
 
 
 def permute_params(param_dict):
@@ -97,7 +97,34 @@ def get_key_val_in_nested_dict(nested_dict):
             keys.append(key)
             vals.append(value)
     return keys, vals
-    
+
+
+def flatten_dict(nested_d):
+    """
+    flatten nested dict, NOTE some of the keys will be lost
+    :param nested_d: nested dict
+    :return: flattened dict
+    """
+    if isinstance(nested_d, dict):
+        keys, vals = get_key_val_in_nested_dict(nested_d)
+        return dict(zip(keys, vals))
+    else:
+        return {}
+
+
+def flatten_dict_list(dict_list):
+    """
+    Given a list of nested dict objects, flatten each dict
+    to only one level of key:value pairs, NOTE some of the
+    keys will be lost
+    :param dict_list: input of nested dict list
+    :return: flattened list of dicts
+    """
+    result = []
+    for d in dict_list:
+        result.append(flatten_dict(d))
+    return result
+
 
 def get_tmp_param_files(params_list):
     """ 
@@ -120,21 +147,10 @@ def dump_param_summary(param_list, output_dir_base):
     :param output_dir_base: where the output will be
     :return: None
     """
-    with open(os.path.join(output_dir_base, "config.csv"), "wb") as fp:
-        writer = csv.writer(fp)
-        header = ["configs"]
-        header += get_keys_in_dict(param_list[0])
-        writer.writerow(header)
-        config_num = 0
-        for param in param_list:
-            row = ["config_%d" % config_num, ]
-            keys, vals = get_key_val_in_nested_dict(param)
-            for val in vals:
-                row.append(val)
-            writer.writerow(row)
-            config_num += 1
-        fp.close()
-    
+    df = pd.DataFrame(flatten_dict_list(param_list))
+    output_name = os.path.join(output_dir_base, "config.csv")
+    df.to_csv(output_name)
+
     
 class Simulation(object):
     """ Top Level Class

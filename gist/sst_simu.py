@@ -497,9 +497,7 @@ class SSTSimulator(simulator.Simulator):
             results = get_ember_output_from_file(log_name)
             d = param.copy()
             d.update(results)
-            keys, vals = simulator.get_key_val_in_nested_dict(d)
-            d = dict(zip(keys, vals))
-            dict_list.append(d)
+            dict_list.append(simulator.flatten_dict(d))
             cnt += 1
         self.df = pd.DataFrame(dict_list)
         output_name = os.path.join(self.output_base_dir, "summary.csv")
