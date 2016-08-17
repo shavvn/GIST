@@ -46,12 +46,14 @@ def separate_topos(df):
     x_s = df["shape"].str.count("x").unique()
     for x in x_s:
         if x > 0:
-            df.ix[(df["topo"] == "torus") & (df["shape"].str.count("x") == x),
+            df.ix[(df["topo"] == "torus") &
+                  (df["shape"].str.count("x") == x),
                   "topo"] = "torus_%d" % (x + 1)
     colon_s = df["shape"].str.count(":").unique()
     for x in colon_s:
         if x > 0:
-            df.ix[(df["topo"] == "fattree") & (df["shape"].str.count(":") == x),
+            df.ix[(df["topo"] == "fattree") &
+                  (df["shape"].str.count(":") == x),
                   "topo"] = "fattree_%d" % (x + 1)
     return df
 
@@ -146,7 +148,8 @@ def calculate_radix(topo, shape):
     """
     given a topo and shape, calculate radix using the sub-functions
     above, to use this function with DataFrame object, do:
-    df["radix"] = df.apply(lambda x: ana.calculate_radix(x["topo"], x["shape"]), axis=1)
+    df["radix"] = df.apply(lambda x: \
+    analysis.calculate_radix(x["topo"], x["shape"]), axis=1)
     :param topo: topology str
     :param shape: shape str
     :return: radix, 0 if cannot recognize

@@ -219,6 +219,19 @@ def get_ember_output_from_line(line):
     return results
 
 
+def get_miranda_output_from_line(line):
+    """
+    get miranda output from a text line
+    :param line:
+    :return:
+    """
+    result = {}
+    if "Simulation is complete" in line:
+        exe_time = str(get_exe_time_in_line(line))
+        result["exe_time(us)"] = exe_time
+    return result
+
+
 def get_ember_output_from_file(log_name):
     """
     this is simply a wrapper of get_ember_output_from_line to process a file
@@ -231,6 +244,32 @@ def get_ember_output_from_file(log_name):
             result.update(get_ember_output_from_line(line))
         log_fp.close()
     return result
+
+
+def get_miranda_output_from_file(log_name):
+    result = {}
+    with open(log_name, "r") as log_fp:
+        for line in log_fp:
+            result.update(get_miranda_output_from_line(line))
+        log_fp.close()
+    return result
+
+
+def get_ep_specific_output(ep_type, log_name):
+    """
+    a wrapper of above 2 methods, chose which one based on
+    ep type
+    In theory, that ember func would work fine on all cases
+    but it would just be faster to use that miranda one tho
+    :param ep_type: end point type, e.g. ember, miranda ...
+    :param log_name: output log name..
+    :return:
+    """
+    if ep_type == "ember_ep":
+        results = get_ember_output_from_file(log_name)
+    else:
+        results = get_miranda_output_from_file(log_name)
+    return results
 
 
 def compile_ember_output(log_name, output_dir_base,
@@ -425,6 +464,25 @@ class SSTSimulator(simulator.Simulator):
         else:
             self.compile_ember_output()
 
+    def compile_general_output(self):
+        cnt = 0
+        dict_list = []
+        ep_type = self.param_list[0]["ep_type"] != "ember_ep"
+        for param in self.param_list:
+            sub_dir = os.path.join(self.output_base_dir, "config_%d" % cnt)
+            log_name = os.path.join(sub_dir, "output.log")
+            results = get_ep_specific_output(ep_type, log_name)
+            d = param.copy()
+            d.update(results)
+            # TODO it works but it might be better to use pandas hierarchical index?
+            keys, vals = simulator.get_key_val_in_nested_dict(d)
+            d = dict(zip(keys, vals))
+            dict_list.append(d)
+            cnt += 1
+        self.df = pd.DataFrame(dict_list)
+        output_name = os.path.join(self.output_base_dir, "summary.csv")
+        self.df.to_csv(output_name)
+
     def compile_ember_output(self):
         """
         Using pandas for the first time to dump output
@@ -439,7 +497,6 @@ class SSTSimulator(simulator.Simulator):
             results = get_ember_output_from_file(log_name)
             d = param.copy()
             d.update(results)
-            # TODO it works but it might be better to use pandas hierarchical index?
             keys, vals = simulator.get_key_val_in_nested_dict(d)
             d = dict(zip(keys, vals))
             dict_list.append(d)
@@ -447,6 +504,7 @@ class SSTSimulator(simulator.Simulator):
         self.df = pd.DataFrame(dict_list)
         output_name = os.path.join(self.output_base_dir, "summary.csv")
         self.df.to_csv(output_name)
+
 
 if __name__ == "__main__":
     arg_parser = utils.ArgParser(sys.argv[1:])
