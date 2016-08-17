@@ -180,7 +180,7 @@ def concat_summarys(file_list, output_name="super_summary.csv"):
     """
     frames = []
     for csv in file_list:
-        df = pd.read_csv(csv)
+        df = pd.read_csv(csv, index_col=0)
         frames.append(df)
     df = pd.concat(frames, ignore_index=True)
     df.to_csv(output_name)
