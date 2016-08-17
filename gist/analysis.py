@@ -167,6 +167,22 @@ def calculate_radix(topo, shape):
     return radix
 
 
+def concat_summarys(file_list, output_name="super_summary.csv"):
+    """
+    concatenate output summaries from various places
+    and thanks to pandas the header and index will be handled
+    :param file_list: list of file paths or pointers to summary csv files
+    :param output_name: output csv file name
+    :return: None
+    """
+    frames = []
+    for csv in file_list:
+        df = pd.read_csv(csv)
+        frames.append(df)
+    df = pd.concat(frames, ignore_index=True)
+    df.to_csv(output_name)
+
+
 def plot_all_lines(df,
                    x_labels,
                    y_labels,

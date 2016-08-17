@@ -367,7 +367,7 @@ class SSTSimulator(simulator.Simulator):
         self.other_opts = self.sim_opts["other_opts"]
         self.stats = self.other_opts.pop("stats")
         self.stats_params = self.params["stats_params"]
-        self.pd = None
+        self.df = None
 
     def add_specific_opts(self, pre_cmd):
         """ this handles ["other_opts"]
@@ -444,9 +444,9 @@ class SSTSimulator(simulator.Simulator):
             d = dict(zip(keys, vals))
             dict_list.append(d)
             cnt += 1
-        self.pd = pd.DataFrame(dict_list)
+        self.df = pd.DataFrame(dict_list)
         output_name = os.path.join(self.output_base_dir, "summary.csv")
-        self.pd.to_csv(output_name)
+        self.df.to_csv(output_name)
 
 if __name__ == "__main__":
     arg_parser = utils.ArgParser(sys.argv[1:])
