@@ -8,6 +8,7 @@ import tempfile
 import time
 
 import pandas as pd
+import shutil
 
 
 def get_time_str():
@@ -334,3 +335,19 @@ def dump_param_summary(param_list, output_dir_base):
     df = pd.DataFrame(flatten_dict_list(param_list))
     output_name = os.path.join(output_dir_base, "config.csv")
     df.to_csv(output_name)
+
+
+def copy_input_to_output_dir(config_input, output_dir_base):
+    """
+    copy input config file to output directory
+    return true if successfully copied, otherwise false
+    :param config_input: input config file
+    :param output_dir_base: output_dir where the config will go
+    :return: True if success
+    """
+    try:
+        shutil.copy(config_input, output_dir_base)
+        return True
+    except IOError:
+        print "cannot copy config file to output dir"
+        return False
