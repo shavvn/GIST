@@ -1,6 +1,7 @@
 import os
 import utils
 import pandas as pd
+import itertools
 import matplotlib.pyplot as plt
 
 
@@ -246,6 +247,89 @@ def plot_all_lines(df,
                 fig.savefig(output_name, format="png")
                 fig.clf()
                 plt.close(fig)
+
+
+def find_multi_val_cols(df, ignore_index_col=True, exception_cols=[]):
+    """
+    find columns that has multiple values from a dataframe
+    :param df: input dataframe
+    :param ignore_index_col: if this is true then ignore the index col
+    (the first col), by default is true
+    :param exception_cols: col names will be check against this list,
+    those in this list will be ignored and will not be returned
+    :return: a list with column names that satisfy above requirements
+    """
+    multi_val_cols = []
+    first_col = ignore_index_col
+    for col in df:
+        if first_col:
+            first_col = False
+            continue
+        else:
+            if col in exception_cols:
+                continue
+            else:
+                if df[col].nunique() > 1:
+                    multi_val_cols.append(col)
+                else:
+                    pass
+    return multi_val_cols
+
+
+def plot_everything_in_lines(df, output_dir_base, result_cols, ignored_cols=[]):
+    """
+    Plot everything that could be plotted in a dataframe in line graphs
+    :param df: input dataframe
+    :param output_dir_base: where the graphs will be outputted
+    :param result_cols: list of columns in df that are actually results,
+    these cols will not be plotted on x-axis
+    :param ignored_cols: columns that are ignored
+    :return:
+    """
+    plotable_cols = find_multi_val_cols(df, ignore_index_col=True,
+                                        exception_cols=(result_cols+ignored_cols))
+    plot_cnt = 0
+    for y_col in result_cols:
+        for x_col in plotable_cols:
+            sub_dir_name = utils.replace_special_char(y_col)
+            sub_dir_name += "_vs_"
+            sub_dir_name += utils.replace_special_char(x_col)
+            output_dir = os.path.join(output_dir_base, sub_dir_name)
+            if not os.path.exists(output_dir):
+                os.mkdir(output_dir)
+            other_cols = [item for item in plotable_cols if item != x_col]
+            # There ia a design decision here that whether to plot a lot of
+            # stuff on one graph or fewer things on separate graphs
+            # use the later one for now
+            # plot line_col, groupby other cols
+            for line_col in other_cols:
+                group_cols = [item for item in other_cols if item != line_col]
+                graph_groups = df.groupby(group_cols)
+                for graph_name_vals, line_group in graph_groups:
+                    lines = line_group.groupby(line_col)
+                    labels = []
+                    fig, ax = plt.subplots(1, 1)
+                    line_cnt = 0
+                    for line_name_vals, line in lines:
+                        sorted_group = line.sort_values(x_col)
+                        label = sorted_group.iloc[0][line_col]
+                        labels.append(label)
+                        ax.plot(sorted_group[x_col], sorted_group[y_col],
+                                linewidth=2, marker=markers[line_cnt], markersize=8)
+                        line_cnt += 1
+                    title_text = ""
+                    for key, val in zip(group_cols, graph_name_vals):
+                        title_text += "%s=%s" % (str(key), str(val))
+                    ax.set_title(title_text)
+                    ax.legend(labels, loc="best")
+                    ax.set_xlabel(x_col)
+                    ax.set_ylabel(y_col)
+                    output_name = "plot_%d.png" % plot_cnt
+                    output_name = os.path.join(output_dir, output_name)
+                    fig.savefig(output_name, format="png")
+                    plt.close(fig)
+                    plot_cnt += 1
+
 
 pd.DataFrame.mask = mask
 plt.style.use('ggplot')
