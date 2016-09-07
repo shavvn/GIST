@@ -1,7 +1,7 @@
 import os
 import utils
 import pandas as pd
-import itertools
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -279,7 +279,8 @@ def find_multi_val_cols(df, ignore_index_col=True, exception_cols=[]):
 def plot_everything_in_lines(df, output_dir_base, result_cols, ignored_cols=[]):
     """
     Plot everything that could be plotted in a dataframe in line graphs
-    :param df: input dataframe
+    :param df: input dataframe, assuming the df is properly processed and all
+    nan are replaced by -1
     :param output_dir_base: where the graphs will be outputted
     :param result_cols: list of columns in df that are actually results,
     these cols will not be plotted on x-axis
@@ -305,30 +306,47 @@ def plot_everything_in_lines(df, output_dir_base, result_cols, ignored_cols=[]):
             for line_col in other_cols:
                 group_cols = [item for item in other_cols if item != line_col]
                 graph_groups = df.groupby(group_cols)
+                # each group represent a graph
                 for graph_name_vals, line_group in graph_groups:
-                    lines = line_group.groupby(line_col)
-                    labels = []
-                    fig, ax = plt.subplots(1, 1)
-                    line_cnt = 0
-                    for line_name_vals, line in lines:
-                        sorted_group = line.sort_values(x_col)
-                        label = sorted_group.iloc[0][line_col]
-                        labels.append(label)
-                        ax.plot(sorted_group[x_col], sorted_group[y_col],
-                                linewidth=2, marker=markers[line_cnt], markersize=8)
-                        line_cnt += 1
-                    title_text = ""
-                    for key, val in zip(group_cols, graph_name_vals):
-                        title_text += "%s=%s" % (str(key), str(val))
-                    ax.set_title(title_text)
-                    ax.legend(labels, loc="best")
-                    ax.set_xlabel(x_col)
-                    ax.set_ylabel(y_col)
-                    output_name = "plot_%d.png" % plot_cnt
-                    output_name = os.path.join(output_dir, output_name)
-                    fig.savefig(output_name, format="png")
-                    plt.close(fig)
-                    plot_cnt += 1
+                    # if either x or y axis are NaN then move on to next graph
+                    if all(pd.isnull(line_group[y_col])) or \
+                       all(line_group[y_col] == -1):
+                        continue
+                    elif all(pd.isnull(line_group[x_col])) or \
+                         all(line_group[x_col] == -1):
+                        continue
+                    elif all(pd.isnull(line_group[line_col])) or \
+                         all(line_group[line_col] == -1):
+                        continue
+                    else:
+                        lines = line_group.groupby(line_col)
+                        labels = []
+                        fig, ax = plt.subplots(1, 1)
+                        line_cnt = 0
+                        for line_name_vals, line in lines:
+                            sorted_group = line.sort_values(x_col)
+                            label = sorted_group.iloc[0][line_col]
+                            labels.append(label)
+                            if all(pd.isnull(sorted_group[y_col])):
+                                continue
+                            elif all(pd.isnull(sorted_group[x_col])):
+                                continue
+                            else:
+                                ax.plot(sorted_group[x_col], sorted_group[y_col],
+                                        linewidth=2, marker=markers[line_cnt], markersize=8)
+                                line_cnt += 1
+                        title_text = ""
+                        for key, val in zip(group_cols, graph_name_vals):
+                            title_text += "%s=%s" % (str(key), str(val))
+                        ax.set_title(title_text)
+                        ax.legend(labels, loc="best")
+                        ax.set_xlabel(x_col)
+                        ax.set_ylabel(y_col)
+                        output_name = "%s_%d.png" % (line_col, plot_cnt)
+                        output_name = os.path.join(output_dir, output_name)
+                        fig.savefig(output_name, format="png")
+                        plt.close(fig)
+                        plot_cnt += 1
 
 
 pd.DataFrame.mask = mask
