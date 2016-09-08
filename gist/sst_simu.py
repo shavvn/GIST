@@ -4,38 +4,14 @@ explore what interfaces should look like in this file
 import csv
 import os
 import sys
-
-import gist.utils
-import simulator
-import numpy as np
-import pandas as pd
 from collections import OrderedDict
 from subprocess import call
 
+import gist.utils
+import numpy as np
+import pandas as pd
+import simulator
 from gist import analysis
-
-
-def convert_time_to_us(num_token, unit_token):
-    """
-    convert time to a us scale, note there might be precision loss
-    when converting from smaller scale (e.g. 10 ns -> 0 us)
-    :param num_token: string token, should only be a number
-    :param unit_token: string token, contains the time unit
-    :return: integer number if successfully converted, "" otherwise
-    """
-    num_token = float(num_token)
-    if "us" in unit_token:
-        return float(num_token)
-    elif "ps" in unit_token:
-        return float(num_token / 1000000)
-    elif "ns" in unit_token:
-        return float(num_token / 1000)
-    elif "ms" in unit_token:
-        return float(num_token * 1000)
-    elif "s" == unit_token:
-        return float(num_token * 1000000)
-    else:
-        return ""
 
 
 def get_exe_time_in_line(line):
@@ -203,7 +179,7 @@ def get_ember_output_from_line(line):
         lat_index = tokens.index("latency")
         lat = tokens[lat_index + 1]
         lat_unit = tokens[lat_index + 2]
-        lat_in_us = str(convert_time_to_us(lat, lat_unit))
+        lat_in_us = str(gist.utils.convert_time_to_us(lat, lat_unit))
         results["real_latency(us)"] = lat_in_us
     if "bandwidth" in line:
         bw_index = tokens.index("bandwidth")
@@ -212,7 +188,7 @@ def get_ember_output_from_line(line):
     if "total time" in line:
         time_idx = tokens.index("time") + 1
         unit_idx = time_idx + 1
-        sim_time = str(convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
+        sim_time = str(gist.utils.convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
         results["work_time(us)"] = sim_time
     if "Simulation is complete" in line:
         exe_time = str(get_exe_time_in_line(line))
@@ -350,7 +326,7 @@ def compile_ember_output(log_name, output_dir_base,
                         lat_index = tokens.index("latency")
                         lat = tokens[lat_index + 1]
                         lat_unit = tokens[lat_index + 2]
-                        lat_in_us = str(convert_time_to_us(lat, lat_unit))
+                        lat_in_us = str(gist.utils.convert_time_to_us(lat, lat_unit))
                         sim_results.update({"real_latency(us)": lat_in_us})
                     if "bandwidth" in line:
                         bw_index = tokens.index("bandwidth")
@@ -360,7 +336,7 @@ def compile_ember_output(log_name, output_dir_base,
                         # sim time give by particular workload is more precise than total sim time
                         time_idx = tokens.index("time") + 1
                         unit_idx = time_idx + 1
-                        sim_time = str(convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
+                        sim_time = str(gist.utils.convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
                         sim_results.update({"exe_time(us)": sim_time})
                     continue
                 else:

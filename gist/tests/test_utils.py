@@ -45,5 +45,24 @@ class UtilTest(unittest.TestCase):
         in_files = arg_parser.get_input_files(file_type=".md")
         self.assertEqual(len(in_files), 1)
 
+    def test_find_time_unit(self):
+        in_str = " blah foo bar time is 1.23 ns."
+        res = utils.find_time_unit(in_str)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0][0], "1.23")
+        self.assertEqual(res[0][1], "ns")
+        in_str_2 = "have 2 time units here 0.5ns and 1ps"
+        res_2 = utils.find_time_unit(in_str_2)
+        self.assertEqual(len(res_2), 2)
+        self.assertEqual(res_2[0][0], "0.5")
+        self.assertEqual(res_2[0][1], "ns")
+
+    def test_find_bw_unit(self):
+        in_str = "bw is 10 GB/s and 1GB/s, not 1Gb/s"
+        res = utils.find_bw_unit(in_str)
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0][0], "10")
+        self.assertEqual(res[0][1], "GB/s")
+
 if __name__ == '__main__':
     unittest.main()

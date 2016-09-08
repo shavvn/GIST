@@ -1,7 +1,6 @@
 import os
 import utils
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -70,7 +69,7 @@ def move_units_to_index(df):
     # df ranaming http://stackoverflow.com/questions/11346283/renaming-columns-in-pandas
     # then use set_value method
     cols = df.columns
-    # TODO should check different types of unit and unify them
+    # TODO should check different types of units and unify them
     # e.g. "MB" to "GB", "ns" to "us" etc.
     # this should work like calculate_radix function
     for col in cols:

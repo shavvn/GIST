@@ -3,6 +3,7 @@ import itertools
 import json
 import logging
 import os
+import re
 import sys
 import tempfile
 import time
@@ -19,6 +20,46 @@ def get_time_str():
     """
     t_str = time.strftime("%m-%d-%H-%M")
     return t_str
+
+
+def find_time_unit(in_str):
+    """
+    find time with unit in input string, e.g. "xxx is 3.2 us"
+    :param in_str: input string
+    :return: a list of tuples that has (value, unit) pairs in it
+             return [] if not found
+    """
+    re_str = r'(?P<value>\d+\.*\d*)\s*(?P<unit>s|ms|us|ns|ps)'
+    matches = re.findall(re_str, in_str.lower())
+    return matches
+
+
+def convert_time_to_us(num_token, unit_token):
+    """
+    convert time to us scale
+    :param num_token: string token, should only be a number
+    :param unit_token: string token, contains the time unit
+    :return: float number if successfully converted, "" otherwise
+    """
+    num_token = float(num_token)
+    if "us" in unit_token:
+        return float(num_token)
+    elif "ps" in unit_token:
+        return float(num_token / 1000000)
+    elif "ns" in unit_token:
+        return float(num_token / 1000)
+    elif "ms" in unit_token:
+        return float(num_token * 1000)
+    elif "s" == unit_token:
+        return float(num_token * 1000000)
+    else:
+        return ""
+
+
+def find_bw_unit(in_str):
+    re_str = r'(?P<value>\d+\.*\d*)\s*(?P<unit>TB/s|GB/s|MB/s|KB/s)'
+    matches = re.findall(re_str, in_str)
+    return matches
 
 
 def json_to_dict(json_file):
@@ -148,7 +189,7 @@ class ArgParser(object):
         get input files to be processing from args, either csv file(s),
         or a file containing a list of file names to be processed
         or an input dir containing all files to be processed
-        :param file_type: the post fix used to filter file tpyes
+        :param file_type: the post fix used to filter file types
         :return: a list of file names to be processed
         """
         f_list = []
@@ -217,7 +258,7 @@ def permute_params(param_dict):
                     for item in value:
                         for sub_params in permute_params(item):
                             sub_list.append(sub_params)
-                    params.update({key:sub_list})
+                    params.update({key: sub_list})
                 else:
                     params.update({key: value})
             else:
