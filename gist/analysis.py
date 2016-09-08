@@ -58,11 +58,24 @@ def separate_topos(df):
     return df
 
 
+def move_bw_unit_to_index(df):
+    col_replace_pairs = {}
+    for col in df:
+        gbs_rows = df[col].str.contains("GB/s")
+        df[gbs_rows][col].replace(regex=True, inplace=True,
+                                  to_replace=r'\D', value=r'')
+        # maybe do MB/s KB/s later?
+        col_replace_pairs.update({col:col+"(GB/s)"})
+    df.rename(columns=col_replace_pairs, inplace=True)
+    return df
+
+
 def move_units_to_index(df):
     """
     This function should be part of pre-processing before plotting
     this moves
     e.g. from "bw": ["1GB/s", "2GB/s"] to "bw(GB/s)": [1, 2]
+    NOTE this should be done before replacing NaN with -1
     :param df: input df that may have units in its values
     :return: a df that has all units moved to col
     """
@@ -72,8 +85,10 @@ def move_units_to_index(df):
     # TODO should check different types of units and unify them
     # e.g. "MB" to "GB", "ns" to "us" etc.
     # this should work like calculate_radix function
-    for col in cols:
-        pass
+    for col in df:
+        gbs_rows = df[col].str.contains("GB/s")
+        df[gbs_rows][col].replace(regex=True, inplace=True,
+                                  to_replace=r'\D', value=r'')
 
 
 def cal_dragonfly_radix(shape_str):
