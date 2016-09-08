@@ -59,6 +59,24 @@ def separate_topos(df):
     return df
 
 
+def move_units_to_index(df):
+    """
+    This function should be part of pre-processing before plotting
+    this moves
+    e.g. from "bw": ["1GB/s", "2GB/s"] to "bw(GB/s)": [1, 2]
+    :param df: input df that may have units in its values
+    :return: a df that has all units moved to col
+    """
+    # df ranaming http://stackoverflow.com/questions/11346283/renaming-columns-in-pandas
+    # then use set_value method
+    cols = df.columns
+    # TODO should check different types of unit and unify them
+    # e.g. "MB" to "GB", "ns" to "us" etc.
+    # this should work like calculate_radix function
+    for col in cols:
+        pass
+
+
 def cal_dragonfly_radix(shape_str):
     """
     This works for dragonfly shapes formatted as
