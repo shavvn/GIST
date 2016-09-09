@@ -70,13 +70,13 @@ def move_bw_unit_to_index(df):
     col_replace_pairs = {}
     for col in new_df:
         if new_df[col].dtype == 'O':
-            gbs_rows = new_df[col].str.contains(r'\d+\.*\d*\s*GB/s')
-            if not all(gbs_rows == False):
+            bw_rows = new_df[col].str.contains(r'\d+\.*\d*\s*GB/s')
+            if not all(bw_rows == False):
                 # use .loc to make sure it's operated on original copy (new_df)
                 # because the inplace flag doesn't always work as it should, wtf...
-                new_df.loc[gbs_rows, col] = new_df[gbs_rows][col].replace(regex=True, inplace=False,
-                                                                          to_replace=r'\D', value=r'')
-                new_df.loc[gbs_rows, col] = new_df[gbs_rows][col].map(lambda x: float(x))
+                new_df.loc[bw_rows, col] = new_df[bw_rows][col].replace(regex=True, inplace=False,
+                                                                        to_replace=r'\D', value=r'')
+                new_df.loc[bw_rows, col] = new_df[bw_rows][col].map(lambda x: float(x))
                 # maybe do MB/s KB/s as well?
                 col_replace_pairs.update({col: col+"(GB/s)"})
     new_df.rename(columns=col_replace_pairs, inplace=True)
@@ -383,6 +383,135 @@ def plot_everything_in_lines(df, output_dir_base, result_cols, ignored_cols=[]):
                         fig.savefig(output_name, format="png")
                         plt.close(fig)
                         plot_cnt += 1
+
+
+def _pd_data_valid(pd_obj):
+    """
+    check if data is valid in a pandas object for *plotting*
+    it's not valid if all null or all -1 or only 1 data point
+    Note that -1 is the arbitrary value I assigned
+    :param pd_obj: pandas object, either DF or Series
+    :return: True if valid, False otherwise
+    """
+    if all(pd.isnull(pd_obj)):
+        return False
+    elif all(pd_obj == -1):
+        return False
+    elif len(pd_obj) <= 1:
+        return False
+    else:
+        return True
+
+
+def _get_x_y_from_groups(data_groups, x_col, y_col):
+    """
+    :param data_groups: should be a groupby obj, each group represents a line
+                        assume it's already sorted
+    :param x_col: indexer of column that to be plotted as x
+    :param y_col: indexer of column that to be plotted as y
+    :return: x_val, y_val, both are lists of lists representing a set of data
+    """
+    x_vals = []
+    y_vals = []
+    if not data_groups:
+        return x_vals, y_vals
+    else:
+        for line_name_vals, line in data_groups:
+            if _pd_data_valid(line[x_col]) and \
+               _pd_data_valid(line[y_col]):
+                x_vals.append(line[x_col])
+                y_vals.append(line[y_col])
+            else:
+                pass
+    return x_vals, y_vals
+
+
+def _get_labels_from_groups(data_groups, col_index):
+    """
+    get data labels from groupby object
+    :param data_groups: groupby object, each represent a set of data
+    to be plotted
+    :param col_index: column index for the label
+    :return: a list of labels for data
+    """
+    labels = []
+    for line_name_vals, line in data_groups:
+        label = line.iloc[0][col_index]
+        labels.append(label)
+    return labels
+
+
+def _get_title_text(keys, vals):
+    """
+    get graph title text from key, value pairs,
+    :param keys:
+    :param vals:
+    :return:
+    """
+    title_text = ""
+    for key, val in zip(keys, vals):
+        title_text += "%s=%s" % (str(key), str(val))
+    return title_text
+
+
+def get_plotable_data(df, result_cols, ignored_cols=[]):
+    """
+    get plotable data (2D) from a dataframe, you need to specify which ones
+    are results and which cols should be ignored. Will return a list of dicts
+    that should provide enough info to plot a graph. e.g. x, y vals, labels,
+    title, output_dir, output_name, etc.
+    :param df: input dataframe
+    :param result_cols:list of columns in df that are actually results,
+    these cols will not be plotted on x-axis
+    :param ignored_cols: columns that are ignored, usually those with variants
+    but don't matter
+    :return: a list of dicts, each should contain enough data to plot
+    """
+    plotable_cols = find_multi_val_cols(df, ignore_index_col=True,
+                                        exception_cols=(result_cols + ignored_cols))
+    # damn this could be a polly class...
+    graph_params = []
+    for y_col in result_cols:
+        for x_col in plotable_cols:
+            sub_dir_name = utils.replace_special_char(y_col)
+            sub_dir_name += "_vs_"
+            sub_dir_name += utils.replace_special_char(x_col)
+            other_cols = [item for item in plotable_cols if item != x_col]
+            # pick one metric to plot different lines while keeping all others same
+            for line_col in other_cols:
+                group_cols = [item for item in other_cols if item != line_col]
+                graph_groups = df.groupby(group_cols)
+                param = {}
+                g_cnt = 0
+                # each group represent a graph
+                for graph_name_vals, graph_group in graph_groups:
+                    if _pd_data_valid(graph_group[y_col]) and \
+                       _pd_data_valid(graph_group[x_col]) and \
+                       _pd_data_valid(graph_group[line_col]):
+                        sorted_graph = graph_group.sort_values(by=x_col,
+                                                               ascending=True)
+                        lines = sorted_graph.groupby(line_col)
+                        labels = _get_labels_from_groups(lines, line_col)
+                        x_vals, y_vals = _get_x_y_from_groups(lines, x_col, y_col)
+                        if x_vals and y_vals:
+                            title = _get_title_text(group_cols, graph_name_vals)
+                            output_name = utils.replace_special_char(line_col)
+                            output_name += str(g_cnt)
+                            param["title"] = title
+                            param["legends"] = labels
+                            param["x"] = x_vals
+                            param["y"] = y_vals
+                            param["x_label"] = x_col
+                            param["y_label"] = y_col
+                            param["output_dir"] = sub_dir_name
+                            param["output_name"] = output_name
+                            graph_params.append(param)
+                            g_cnt += 1
+                        else:
+                            pass
+                    else:
+                        pass
+    return graph_params
 
 
 pd.DataFrame.mask = mask
