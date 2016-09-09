@@ -59,15 +59,28 @@ def separate_topos(df):
 
 
 def move_bw_unit_to_index(df):
+    """
+    This is pretty tricky since pandas makes the object copy behavior
+    very unpredictable
+    :param df: input df, should have no side effect after this func call
+    :return: a new copy of df that has bw units moved to col label
+    """
+    # make a new copy to avoid side effects
+    new_df = df.copy()
     col_replace_pairs = {}
-    for col in df:
-        gbs_rows = df[col].str.contains("GB/s")
-        df[gbs_rows][col].replace(regex=True, inplace=True,
-                                  to_replace=r'\D', value=r'')
-        # maybe do MB/s KB/s later?
-        col_replace_pairs.update({col:col+"(GB/s)"})
-    df.rename(columns=col_replace_pairs, inplace=True)
-    return df
+    for col in new_df:
+        if new_df[col].dtype == 'O':
+            gbs_rows = new_df[col].str.contains(r'\d+\.*\d*\s*GB/s')
+            if not all(gbs_rows == False):
+                # use .loc to make sure it's operated on original copy (new_df)
+                # because the inplace flag doesn't always work as it should, wtf...
+                new_df.loc[gbs_rows, col] = new_df[gbs_rows][col].replace(regex=True, inplace=False,
+                                                                          to_replace=r'\D', value=r'')
+                new_df.loc[gbs_rows, col] = new_df[gbs_rows][col].map(lambda x: float(x))
+                # maybe do MB/s KB/s as well?
+                col_replace_pairs.update({col: col+"(GB/s)"})
+    new_df.rename(columns=col_replace_pairs, inplace=True)
+    return new_df
 
 
 def move_units_to_index(df):
@@ -79,16 +92,7 @@ def move_units_to_index(df):
     :param df: input df that may have units in its values
     :return: a df that has all units moved to col
     """
-    # df ranaming http://stackoverflow.com/questions/11346283/renaming-columns-in-pandas
-    # then use set_value method
-    cols = df.columns
-    # TODO should check different types of units and unify them
-    # e.g. "MB" to "GB", "ns" to "us" etc.
-    # this should work like calculate_radix function
-    for col in df:
-        gbs_rows = df[col].str.contains("GB/s")
-        df[gbs_rows][col].replace(regex=True, inplace=True,
-                                  to_replace=r'\D', value=r'')
+    move_bw_unit_to_index(df)
 
 
 def cal_dragonfly_radix(shape_str):
