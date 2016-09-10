@@ -469,7 +469,6 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
     """
     plotable_cols = find_multi_val_cols(df, ignore_index_col=True,
                                         exception_cols=(result_cols + ignored_cols))
-    # damn this could be a polly class...
     graph_params = []
     for y_col in result_cols:
         for x_col in plotable_cols:
@@ -481,10 +480,10 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
             for line_col in other_cols:
                 group_cols = [item for item in other_cols if item != line_col]
                 graph_groups = df.groupby(group_cols)
-                param = {}
-                g_cnt = 0
                 # each group represent a graph
                 for graph_name_vals, graph_group in graph_groups:
+                    param = {}
+                    g_cnt = 0
                     if _pd_data_valid(graph_group[y_col]) and \
                        _pd_data_valid(graph_group[x_col]) and \
                        _pd_data_valid(graph_group[line_col]):
