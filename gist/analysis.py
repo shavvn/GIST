@@ -396,12 +396,13 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
     """
     plotable_cols = find_multi_val_cols(df, ignore_index_col=True,
                                         exception_cols=(result_cols + ignored_cols))
-    graph_params = []
+    graph_params = {}
     for y_col in result_cols:
         for x_col in plotable_cols:
             sub_dir_name = utils.replace_special_char(y_col)
             sub_dir_name += "_vs_"
             sub_dir_name += utils.replace_special_char(x_col)
+            graph_params[sub_dir_name] = []
             other_cols = [item for item in plotable_cols if item != x_col]
             # pick one metric to plot different lines while keeping all others same
             for line_col in other_cols:
@@ -429,9 +430,8 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
                             param["y"] = y_vals
                             param["x_label"] = x_col
                             param["y_label"] = y_col
-                            param["save_dir"] = sub_dir_name
                             param["save_name"] = output_name
-                            graph_params.append(param)
+                            graph_params[sub_dir_name].append(param)
                             g_cnt += 1
                         else:
                             pass

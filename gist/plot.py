@@ -33,7 +33,7 @@ markers = {  # this is a copy from matplotlib.markers.py ...
         }.keys()
 
 
-def lines(params, fig_format="png", output_dir_base="."):
+def lines(params, fig_format="png", output_dir="."):
     """
     plot lines from a param dict, maybe should define it more strictly..
     :param params: should have following keys:
@@ -48,7 +48,7 @@ def lines(params, fig_format="png", output_dir_base="."):
             "save_name": # save file name
         }
     :param fig_format: figure format, "png" or "pdf
-    :param output_dir_base: base directory  where figs will be saved
+    :param output_dir: directory  where figs will be saved
     :return: none for now
     """
     fig, ax = plt.subplots(1, 1)
@@ -63,12 +63,9 @@ def lines(params, fig_format="png", output_dir_base="."):
     ax.set_ylabel(params["y_label"])
     ax.set_xlim(0)
     ax.set_ylim(0)
-    if not os.path.exists(output_dir_base):
-        os.mkdir(output_dir_base)
-    output_path = os.path.join(output_dir_base, params["save_dir"])
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
-    output_name = os.path.join(output_path, params["save_name"])
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    output_name = os.path.join(output_dir, params["save_name"])
     if fig_format == "png":
         output_name += ".png"
     elif fig_format == "pdf":
