@@ -369,11 +369,11 @@ def plot_ember_summary(summary_csv, output_dir_base):
     df = analysis.move_bw_unit_to_index(df)
     df = df.replace(np.nan, -1)
     df = analysis.separate_topos(df)
-    df["radix"] = df.apply(lambda x: analysis.calculate_radix(x["topo"], x["shape"]),
-                           axis=1)
+    df = analysis.add_radix_col(df)
     result_cols = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
 
-    data = analysis.get_plotable_data(df, result_cols=result_cols)
+    data = analysis.get_plotable_data(df, result_cols=result_cols,
+                                      ignored_cols=["shape", "platform", "num_nodes"])
     for sub_grp, grp_data in data.iteritems():
         if grp_data:
             if any(type(s) is str for s in grp_data[0]["x"][0]) or \
@@ -382,8 +382,8 @@ def plot_ember_summary(summary_csv, output_dir_base):
                 continue
             else:
                 for graph_data in grp_data:
-                    plot.lines(graph_data,
-                               output_dir=os.path.join(output_dir_base, sub_grp))
+                    out_dir = os.path.join(output_dir_base, sub_grp)
+                    plot.lines(graph_data, output_dir=out_dir)
 
 
 class SSTSimulator(simulator.Simulator):

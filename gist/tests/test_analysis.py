@@ -29,6 +29,10 @@ class AnalysisTest(unittest.TestCase):
         # dragonfly
         self.assertEqual(self.df.loc[10, "radix"], 51)
 
+    def test_add_radix(self):
+        new_df = analysis.add_radix_col(self.df)
+        self.assertIn("radix", new_df)
+
     def test_move_bw_to_index(self):
         new_df = analysis.move_bw_unit_to_index(self.df)
         self.assertEqual(new_df.loc[0, "bandwidth(GB/s)"], 4.0)

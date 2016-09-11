@@ -1,34 +1,5 @@
-import os
-import utils
 import pandas as pd
-import matplotlib.pyplot as plt
-
-
-markers = {  # this is a copy from matplotlib.markers.py ...
-        '.': 'point',
-        # ',': 'pixel',
-        'o': 'circle',
-        'v': 'triangle_down',
-        '^': 'triangle_up',
-        '<': 'triangle_left',
-        '>': 'triangle_right',
-        '1': 'tri_down',
-        '2': 'tri_up',
-        '3': 'tri_left',
-        '4': 'tri_right',
-        '8': 'octagon',
-        's': 'square',
-        'p': 'pentagon',
-        '*': 'star',
-        'h': 'hexagon1',
-        'H': 'hexagon2',
-        # '+': 'plus',
-        # 'x': 'x',
-        'D': 'diamond',
-        'd': 'thin_diamond',
-        # '|': 'vline',
-        # '_': 'hline',
-        }.keys()
+from gist import utils
 
 
 def mask(df, key, value):
@@ -207,6 +178,21 @@ def calculate_radix(topo, shape):
     return radix
 
 
+def add_radix_col(df):
+    """
+    add a radix column to df, calculated based on "topo" and "shape" cols
+    :param df: input df, must contain "topo" and "shape" cols
+    :return: a new df with a "radix" column
+    """
+    if "topo" in df and "shape" in df:
+        new_df = df.copy()
+        new_df["radix"] = new_df.apply(lambda x: calculate_radix(x["topo"], x["shape"]),
+                                       axis=1)
+        return new_df
+    else:
+        exit("cannot calculate radix due to lack of shape and topo!")
+
+
 def concat_summarys(file_list, output_name="super_summary.csv"):
     """
     concatenate output summaries from various places
@@ -221,68 +207,6 @@ def concat_summarys(file_list, output_name="super_summary.csv"):
         frames.append(df)
     df = pd.concat(frames, ignore_index=True)
     df.to_csv(output_name)
-
-
-def plot_all_lines(df,
-                   x_labels,
-                   y_labels,
-                   plot_class_keys,
-                   line_key,
-                   output_dir_base,
-                   ):
-    """
-    plot everything from a DataFrame based on various keys given
-    :param df: pandas.DataFrame
-    :param x_labels: list, labels to be plotted on x-axis
-    :param y_labels: list, labels to be plotted on y-axis
-    :param plot_class_keys: list, keys that will be used to divide df into groups,
-                            each group represents the data to be plotted on a graph
-    :param line_key: str, key that will be used to divide df into groups,
-                            each group represents the data to be plotted as a line
-    :param output_dir_base: output directory, but this function will also created
-                            subdirectories based on x_labels and y_labels
-    :return:
-    """
-    plot_groups = df.groupby(plot_class_keys)
-    plot_cnt = 0
-    for x_label in x_labels:
-        for y_label in y_labels:
-            # each of this group should be in a separate plot
-            for plot_keys, each_plot_group in plot_groups:
-                # if needed, add sub_plot groups, but let's not do it now...
-                fig, ax = plt.subplots(1, 1)
-                line_groups = each_plot_group.groupby(line_key)
-                line_cnt = 0
-                labels = []
-                # each of this group should be a line in plot
-                for line_keys, each_line_group in line_groups:
-                    group = each_line_group.sort_values(x_label)
-                    topo = group.iloc[0][line_key]
-                    labels.append(topo)
-                    if not all(group[y_label] == -1):
-                        ax.plot(group[x_label], group[y_label],
-                                linewidth=2, marker=markers[line_cnt], markersize=8)
-                    line_cnt += 1
-                title_text = ""
-                key_cnt = 0
-                for key in plot_class_keys:
-                    title_text += "%s=%s_" % (key, str(plot_keys[key_cnt]))
-                    key_cnt += 1
-                ax.set_title(title_text)
-                ax.legend(labels, loc="best")
-                ax.set_xlabel(x_label)
-                ax.set_ylabel(y_label)
-                sub_dir_name = utils.replace_special_char(y_label) + "_vs_" + \
-                    utils.replace_special_char(x_label)
-                output_dir = os.path.join(output_dir_base, sub_dir_name)
-                if not os.path.exists(output_dir):
-                    os.mkdir(output_dir)
-                output_name = "plot_%d.png" % plot_cnt
-                output_name = os.path.join(output_dir, output_name)
-                plot_cnt += 1
-                fig.savefig(output_name, format="png")
-                fig.clf()
-                plt.close(fig)
 
 
 def find_multi_val_cols(df, ignore_index_col=True, exception_cols=[]):
@@ -443,6 +367,5 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
 
 
 pd.DataFrame.mask = mask
-plt.style.use('ggplot')
 
 
