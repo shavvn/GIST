@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import simulator
 from gist import analysis
+from gist import plot
 
 
 def get_exe_time_in_line(line):
@@ -365,16 +366,24 @@ def compile_ember_output(log_name, output_dir_base,
 
 def plot_ember_summary(summary_csv, output_dir_base):
     df = pd.read_csv(summary_csv)
+    df = analysis.move_bw_unit_to_index(df)
     df = df.replace(np.nan, -1)
-    # df["radix"] = df.apply(lambda x: analysis.calculate_radix(x["topo"], x["shape"]),
-    #                        axis=1)
-    x_labels = ["num_nics"]
-    y_labels = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
-    plot_class_keys = ["work_load", "messageSize", "iteration", "messagesize"]
-    line_key = "topo"
     df = analysis.separate_topos(df)
-    analysis.plot_all_lines(df, x_labels, y_labels, plot_class_keys,
-                            line_key, output_dir_base)
+    df["radix"] = df.apply(lambda x: analysis.calculate_radix(x["topo"], x["shape"]),
+                           axis=1)
+    result_cols = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
+
+    data = analysis.get_plotable_data(df, result_cols=result_cols)
+    for sub_grp, grp_data in data.iteritems():
+        if grp_data:
+            if any(type(s) is str for s in grp_data[0]["x"][0]) or \
+               any(type(s) is str for s in grp_data[0]["y"][0]):
+                # TODO plot as bar graphs when x is strings
+                continue
+            else:
+                for graph_data in grp_data:
+                    plot.lines(graph_data,
+                               output_dir=os.path.join(output_dir_base, sub_grp))
 
 
 class SSTSimulator(simulator.Simulator):

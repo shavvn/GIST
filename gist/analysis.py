@@ -346,8 +346,8 @@ def _get_x_y_from_groups(data_groups, x_col, y_col):
         for line_name_vals, line in data_groups:
             if _pd_data_valid(line[x_col]) and \
                _pd_data_valid(line[y_col]):
-                x_vals.append(line[x_col])
-                y_vals.append(line[y_col])
+                x_vals.append(line[x_col].tolist())
+                y_vals.append(line[y_col].tolist())
             else:
                 pass
     return x_vals, y_vals
@@ -394,10 +394,12 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
     but don't matter
     :return: a list of dicts, each should contain enough data to plot
     """
+    # sanity check to make sure inputs are valid
+    res_cols = [col for col in result_cols if col in df]
     plotable_cols = find_multi_val_cols(df, ignore_index_col=True,
-                                        exception_cols=(result_cols + ignored_cols))
+                                        exception_cols=(res_cols + ignored_cols))
     graph_params = {}
-    for y_col in result_cols:
+    for y_col in res_cols:
         for x_col in plotable_cols:
             sub_dir_name = utils.replace_special_char(y_col)
             sub_dir_name += "_vs_"
@@ -423,7 +425,7 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
                         if x_vals and y_vals:
                             title = _get_title_text(group_cols, graph_name_vals)
                             output_name = utils.replace_special_char(line_col)
-                            output_name += str(g_cnt)
+                            output_name += "_%d" % g_cnt
                             param["title"] = title
                             param["legends"] = labels
                             param["x"] = x_vals
