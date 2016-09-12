@@ -33,6 +33,9 @@ markers = {  # this is a copy from matplotlib.markers.py ...
         }.keys()
 
 
+plt.style.use('ggplot')
+
+
 def lines(params, fig_format="png", output_dir="."):
     """
     plot lines from a param dict, maybe should define it more strictly..
@@ -74,4 +77,38 @@ def lines(params, fig_format="png", output_dir="."):
         exit("invalid output format!")
     fig.savefig(output_name, format=fig_format)
     plt.close(fig)
+
+
+def bars(params, fig_format="png", output_dir="."):
+    fig, ax = plt.subplot(1, 1)
+    cnt = 0
+    # TODO if data is more than one dimension, plot as grouped
+    if len(params["x"]) == 0:
+        return
+    else:
+        x_type = type(params["x"][0])
+        x_ticks = []
+        x_ticklabels = []
+        # TODO figure out this 4 situation things...
+        if x_type == str:
+            x_tick = 0
+            for x in params["x"]:
+                for x_label in x:
+                    if x_label not in x_ticklabels:
+                        x_ticklabels.append(x_label)
+                        x_ticks.append(x_tick)
+                        x_tick += 1
+                    else:
+                        pass
+        else:
+            # dont plot ticks since too many...
+            pass
+        if len(params["x"]) > 1:
+            # plot as grouped bars
+            pass
+        else:
+            ax.set_xticks(x_ticks)
+            ax.set_ticklabels(x_ticklabels, ha="center", rotation="vertical")
+            ax.bar(x_ticks, height=y, align="center", edgecolor="none")
+            pass
 
