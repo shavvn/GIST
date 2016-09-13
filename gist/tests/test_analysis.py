@@ -33,6 +33,20 @@ class AnalysisTest(unittest.TestCase):
         new_df = analysis.add_radix_col(self.df)
         self.assertIn("radix", new_df)
 
+    def test_cal_num_nodes(self):
+        self.df["num_nodes"] = self.df.apply(lambda x: analysis.cal_num_nodes(x["topo"],
+                                                                              x["shape"]),
+                                             axis=1)
+        # 3D torus
+        self.assertEqual(self.df.loc[0, "num_nodes"], 5832)
+        # 2D torus
+        self.assertEqual(self.df.loc[4, "num_nodes"], 5625)
+        # fattree
+        self.assertEqual(self.df.loc[7, "num_nodes"], 5120)
+        # dragonfly
+        self.assertEqual(self.df.loc[10, "num_nodes"], 114582)
+
+
     def test_move_bw_to_index(self):
         new_df = analysis.move_bw_unit_to_index(self.df)
         self.assertEqual(new_df.loc[0, "bandwidth(GB/s)"], 4.0)

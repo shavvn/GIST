@@ -203,7 +203,9 @@ def cal_torus_nodes(shape_str, local_ports=1):
     """
     dims = [int(x) for x in shape_str.split("x")]
     num_nodes = local_ports
+    print num_nodes
     for x in dims:
+        print x
         num_nodes *= x
     return num_nodes
 
