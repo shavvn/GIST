@@ -193,6 +193,139 @@ def add_radix_col(df):
         exit("cannot calculate radix due to lack of shape and topo!")
 
 
+def cal_torus_nodes(shape_str, local_ports=1):
+    """
+    calculate num of nodes in a torus network
+    :param shape_str: torus shape string, formatted like axbxcxd... each
+        is the number of routers on 1 dimension
+    :param local_ports: number of nodes attached on each router, default 1
+    :return: num of nodes
+    """
+    dims = [int(x) for x in shape_str.split("x")]
+    num_nodes = local_ports
+    for x in dims:
+        num_nodes *= x
+    return num_nodes
+
+
+def cal_fattree_nodes(shape_str):
+    """
+    calculate num of nodes in fattree shape string
+    :param shape_str: a fattree shape str is formatted as follows:
+        a,a:b,b:...c
+        different levels are separated by ":", ups and down links in
+        each level is separated by ","
+        num of nodes is calculated by multiplying downs
+    :return: num of nodes
+    """
+    levels = shape_str.split(":")
+    downs = []
+    for l in levels:
+        links = l.split(",")
+        downs.append(int(links[0]))
+    nodes = 1
+    for x in downs:
+        nodes *= x
+    return nodes
+
+
+def cal_dragonfly_nodes(shape_str):
+    """
+    calculate num of nodes in a dragonfly shape string
+    :param shape_str: a dragonfly shape str is formatted as follows:
+        p:h:a
+        p is num of hosts per router
+        h is intergroup links per router
+        a is num of routers per group
+        this is the "max" dragonfly setup so num of groups = a*h + 1
+        num of nodes is thus (a*h + 1)*a*p
+    :return: num of nodes
+    """
+    shapes = [int(x) for x in shape_str.split(":")]
+    if len(shapes) == 3:
+        hosts, inter_links, rtrs_per_grp = shapes
+    elif len(shapes) == 4:
+        radix, hosts, inter_links, rtrs_per_grp = shapes
+    else:
+        exit("dragonfly shape not right...")
+    num_grps = inter_links * rtrs_per_grp + 1
+    nodes = hosts * rtrs_per_grp * num_grps
+    return nodes
+
+
+def cal_dia2_nodes(shape_str):
+    """
+    calculate num of nodes in a diameter 2 shape str by a table lookup
+    :param shape_str: formatted as "radix:hosts"
+        num of routers is determined by radix, and multiplied by
+        num of hosts is num of nodes
+    :return: num of nodes
+    """
+    mapping = {
+        "5": 18,
+        "7": 50,
+        "11": 98,
+        "17": 242,
+        "19": 338,
+        "25": 578,
+        "29": 722,
+        "35": 1058,
+        "43": 1682,
+        "47": 1922,
+        "55": 2738,
+        "79": 5618
+    }
+    radix, hosts = shape_str.split(":")
+    nodes = mapping[radix] * int(hosts)
+    return nodes
+
+
+def cal_fish_nodes(shape_str):
+    """
+    calculate fishnet/fishlite nodes, based on dia2 graphs
+    :param shape_str: same as dia2
+    :return: num of nodes
+    """
+    nodes = cal_dia2_nodes(shape_str)
+    nodes *= (nodes + 1)
+    return nodes
+
+
+def cal_num_nodes(topo, shape):
+    nodes = 0
+    if topo == "dragonfly":
+        nodes = cal_dragonfly_nodes(shape)
+    elif "torus" in topo:
+        nodes = cal_torus_nodes(shape)
+    elif "fattree" in topo:
+        nodes = cal_fattree_nodes(shape)
+    elif "diameter2" in topo:
+        nodes = cal_dia2_nodes(shape)
+    elif "fishlite" in topo:
+        nodes = cal_fish_nodes(shape)
+    elif "fishnet" in topo:
+        nodes = cal_fish_nodes(shape)
+    return nodes
+
+
+def add_num_nodes_col(df):
+    """
+    add a column of num of nodes to a df, based on "topo", "shape" cols, and
+    potentially other cols e.g. "torus:local_ports"
+    :param df: input df, must contain "topo" and "shape" cols
+    :return:a new df with a "num_nodes" column
+    """
+    if "topo" in df and "shape" in df:
+        new_df = df.copy()
+        new_df["num_nodes"] = new_df.apply(lambda x: cal_num_nodes(x["topo"],
+                                                                   x["shape"]),
+                                           axis=1)
+        return new_df
+    else:
+        exit("cannot calculate radix due to lack of shape and topo!")
+    return df
+
+
 def concat_summarys(file_list, output_name="super_summary.csv"):
     """
     concatenate output summaries from various places

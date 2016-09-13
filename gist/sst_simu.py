@@ -254,6 +254,8 @@ def compile_ember_output(log_name, output_dir_base,
                          output_name="summary.csv"):
     """
     compile output from an ember_output output log file
+    this only works for the sst build-in sweep where a bunch of simulation
+    results  are in one file
     :param log_name: name of log file
     :param output_dir_base: the dir you want to output to
     :param output_name: the name you want to output to, by default summary.csv
