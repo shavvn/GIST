@@ -32,6 +32,25 @@ markers = {  # this is a copy from matplotlib.markers.py ...
         }.keys()
 
 
+hatches = ["/", "\\", "|", "-", "+", "x", "o", "O", ".", "*"]
+
+
+# color scheme credit to
+# http://www.randalolson.com/2014/06/28/\
+# how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
+
+colors = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
+          (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
+          (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
+          (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
+          (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
+
+# Scale the RGB values to the [0, 1] range, which is the format matplotlib accepts.
+for i in range(len(colors)):
+    r, g, b = colors[i]
+    colors[i] = (r / 255., g / 255., b / 255.)
+
+
 plt.style.use('ggplot')
 
 
@@ -97,12 +116,14 @@ def bars(params, fig_format="png", output_dir="."):
         dist = bars_cnt / 4 + 1
         bar_width = float(1.0) / float(bars_cnt + 1)
         offset = 0.0
+        cnt = 0
         for x_labels, y in zip(params["x"], params["y"]):
             _ticks = [x_ticklabels.index(x_label) for x_label in x_labels]
             _ticks = map(lambda x: x*dist, _ticks)
             x_pos = [x + offset for x in _ticks]
-            ax.bar(x_pos, height=y, width=bar_width)
+            ax.bar(x_pos, height=y, width=bar_width, color=colors[cnt])
             offset += bar_width
+            cnt += 1
         x_ticks = [x * dist for x in x_ticks]
         x_ticks = [x + bar_width for x in x_ticks]
         ax.set_xticks(x_ticks)
