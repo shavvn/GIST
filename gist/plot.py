@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 
 """
 this file will eventually look like the polly project I did a while back...
-TODO move all plotting stuff from analysis to here
 """
 
 markers = {  # this is a copy from matplotlib.markers.py ...
@@ -93,27 +92,21 @@ def bars(params, fig_format="png", output_dir="."):
                     x_ticklabels.append(x_label)
                     x_ticks.append(tick)
                     tick += 1
-        if len(params["x"]) > 1:
-            bars_cnt = len(params["legends"])  # should = len(params["x])
-            # 4 bars share 1 unit (cm)
-            dist = bars_cnt / 4 + 1
-            x_ticks = [x*dist for x in x_ticks]
-            bar_width = float(1.0) / float(bars_cnt + 1)
-            offset = 0.0
-            for x_labels, y in zip(params["x"], params["y"]):
-                _ticks = [x_ticklabels.index(x_label) for x_label in x_labels]
-                _ticks = map(lambda x: x*dist, _ticks)
-                x_pos = [x + offset for x in _ticks]
-                ax.bar(x_pos, height=y, width=bar_width)
-                offset += bar_width
-            ax.set_xticks(x_ticks)
-            ax.set_xticklabels(x_ticklabels, ha="center", rotation="vertical")
-        else:
-            ax.set_xticks(x_ticks)
-            ax.set_ticklabels(x_ticklabels,
-                              ha="center",
-                              rotation="vertical")
-            ax.bar(x_ticks, height=params["y"], align="center", edgecolor="none")
+        bars_cnt = len(params["legends"])  # should = len(params["x])
+        # 4 bars share 1 unit (cm)
+        dist = bars_cnt / 4 + 1
+        bar_width = float(1.0) / float(bars_cnt + 1)
+        offset = 0.0
+        for x_labels, y in zip(params["x"], params["y"]):
+            _ticks = [x_ticklabels.index(x_label) for x_label in x_labels]
+            _ticks = map(lambda x: x*dist, _ticks)
+            x_pos = [x + offset for x in _ticks]
+            ax.bar(x_pos, height=y, width=bar_width)
+            offset += bar_width
+        x_ticks = [x * dist for x in x_ticks]
+        x_ticks = [x + bar_width for x in x_ticks]
+        ax.set_xticks(x_ticks)
+        ax.set_xticklabels(x_ticklabels, ha="center", rotation=45)
         ax.set_title(params["title"])
         ax.legend(params["legends"], loc="best")
         ax.set_xlabel(params["x_label"])
