@@ -378,13 +378,16 @@ def plot_ember_summary(summary_csv, output_dir_base):
                                       ignored_cols=["shape", "platform", "num_nodes"])
     for sub_grp, grp_data in data.iteritems():
         if grp_data:
-            if any(type(s) is str for s in grp_data[0]["x"][0]) or \
-               any(type(s) is str for s in grp_data[0]["y"][0]):
-                # TODO plot as bar graphs when x is strings
-                continue
-            else:
-                for graph_data in grp_data:
+            if any(type(s) is str for s in grp_data[0]["x"][0]):
+                if any(type(s) is str for s in grp_data[0]["y"][0]):
+                    return
+                else:
                     out_dir = os.path.join(output_dir_base, sub_grp)
+                    for graph_data in grp_data:
+                        plot.bars(graph_data, output_dir=out_dir)
+            else:
+                out_dir = os.path.join(output_dir_base, sub_grp)
+                for graph_data in grp_data:
                     plot.lines(graph_data, output_dir=out_dir)
 
 
