@@ -372,6 +372,7 @@ def plot_ember_summary(summary_csv, output_dir_base):
     df = df.replace(np.nan, -1)
     df = analysis.separate_topos(df)
     df = analysis.add_radix_col(df)
+    df = analysis.add_num_nodes_col(df)
     result_cols = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
 
     data = analysis.get_plotable_data(df, result_cols=result_cols,
