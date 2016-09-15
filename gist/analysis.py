@@ -1,3 +1,4 @@
+import itertools
 import pandas as pd
 from gist import utils
 
@@ -193,6 +194,22 @@ def add_radix_col(df):
         exit("cannot calculate radix due to lack of shape and topo!")
 
 
+def add_radix_col_by_loop(df):
+    """
+    This is much much slower than add_radix_col
+    just acting as an example, should not be used at all
+    :param df:
+    :return:
+    """
+    if "topo" in df and "shape" in df:
+        new_df = df.copy()
+        for index, row in new_df.iterrows():
+            new_df.loc[index, "radix"] = calculate_radix(row["topo"], row["shape"])
+        return new_df
+    else:
+        exit("cannot calculate radix due to lack of shape and topo!")
+
+
 def cal_torus_nodes(shape_str, local_ports=1):
     """
     calculate num of nodes in a torus network
@@ -324,7 +341,7 @@ def add_num_nodes_col(df):
                                            axis=1)
         return new_df
     else:
-        exit("cannot calculate radix due to lack of shape and topo!")
+        exit("cannot calculate num_nodes due to lack of shape and topo!")
     return df
 
 
@@ -498,6 +515,53 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
                             pass
                     else:
                         pass
+    return graph_params
+
+
+def get_plotable_data_3d(df, result_cols, ignored_cols=[]):
+    """
+    this so far is dedicated for 3D bars...
+    :param df:
+    :param result_cols:
+    :param ignored_cols:
+    :return:
+    """
+    # sanity check on result_cols
+    res_cols = [col for col in result_cols if col in df]
+    plotable_cols = find_multi_val_cols(df, ignore_index_col=True,
+                                        exception_cols=(res_cols + ignored_cols))
+    graph_params = {}
+    for z_col in res_cols:
+        for x_col, y_col in itertools.combinations(plotable_cols, 2):
+            sub_dir_name = utils.replace_special_char(z_col)
+            sub_dir_name += "_vs_"
+            sub_dir_name += utils.replace_special_char(y_col)
+            sub_dir_name += "_vs_"
+            sub_dir_name += utils.replace_special_char(x_col)
+            graph_params[sub_dir_name] = []
+            other_cols = [t for t in plotable_cols if t not in [x_col, y_col]]
+            graph_groups = df.groupby(other_cols)
+            for vals, graph_group in graph_groups:
+                params = {}
+                if _pd_data_valid(graph_group[z_col]) and \
+                   _pd_data_valid(graph_group[y_col]) and \
+                   _pd_data_valid(graph_group[x_col]):
+                    sorted_graph = graph_group.sort_values(by=[x_col, y_col],
+                                                           ascending=True)
+                    x_vals = sorted_graph[x_col].unique()
+                    y_vals = sorted_graph[y_col].unique()
+                    # note the order of z is sorted by [x, y]
+                    z_vals = sorted_graph[z_col]
+                    params["x"] = x_vals
+                    params["y"] = y_vals
+                    params["z"] = z_vals
+                    title = _get_title_text(other_cols, vals)
+                    params["title"] = title
+                    params["x_label"] = x_col
+                    params["y_label"] = y_col
+                    params["z_label"] = z_col
+                    params["save_name"] = title
+                    graph_params[sub_dir_name].append(params)
     return graph_params
 
 
