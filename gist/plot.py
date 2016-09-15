@@ -56,8 +56,8 @@ plt.style.use('ggplot')
 
 def lines(params, fig_format="png", output_dir="."):
     """
-    plot lines from a param dict, maybe should define it more strictly..
-    :param params: should have following keys:
+    plot lines from a param dict
+    :param params: dict, should have following keys:
         {
             "title": # title of graph,
             "legends": # legends for multiple lines,
@@ -65,7 +65,6 @@ def lines(params, fig_format="png", output_dir="."):
             "y_label": # y axis label,
             "x": # x data,
             "y": # y data,
-            "save_dir": # RELATIVE dir where fig will be saved
             "save_name": # save file name
         }
     :param fig_format: figure format, "png" or "pdf
@@ -98,7 +97,25 @@ def lines(params, fig_format="png", output_dir="."):
 
 
 def bars(params, fig_format="png", output_dir="."):
+    """
+    plot bar graphs from params
+    :param params: dict, should have the following keys
+        {
+            "title": # title of graph,
+            "legends": # legends for multiple lines,
+            "x_label": # x axis label,
+            "y_label": # y axis label,
+            "x": # x data,
+            "y": # y data,
+            "save_name": # save file name
+        }
+    :param fig_format: figure format, "png" or "pdf
+    :param output_dir: directory  where figs will be saved
+    :return: none for now
+    """
     if len(params["x"]) == 0:
+        return
+    if len(params["x"][0]) <= 1:
         return
     else:
         fig, ax = plt.subplots(1, 1)
@@ -143,4 +160,14 @@ def bars(params, fig_format="png", output_dir="."):
             exit("invalid output format!")
         fig.savefig(output_name, format=fig_format)
         plt.close(fig)
+
+
+def bars_3d(params, fig_format="png", output_dir="."):
+    """
+    :param params:
+    :param fig_format:
+    :param output_dir:
+    :return:
+    """
+    return
 

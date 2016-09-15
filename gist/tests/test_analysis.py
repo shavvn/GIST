@@ -46,7 +46,6 @@ class AnalysisTest(unittest.TestCase):
         # dragonfly
         self.assertEqual(self.df.loc[10, "num_nodes"], 114582)
 
-
     def test_move_bw_to_index(self):
         new_df = analysis.move_bw_unit_to_index(self.df)
         self.assertEqual(new_df.loc[0, "bandwidth(GB/s)"], 4.0)
