@@ -80,10 +80,11 @@ class Simulator(object):
         cmd = self.sim_opts["mpi_opts"]["mpi_exe"]
         n_threads = self.sim_opts["mpi_opts"]["n"]
         n_threads = int(n_threads)
-        cmd = "%s -n %d %s " % (cmd, n_threads, program_cmd)
         if "other_opts" in self.sim_opts["mpi_opts"]:
             other_opts = self.sim_opts["mpi_opts"]["other_opts"]
-            cmd += other_opts
+            cmd = "%s -n %d %s %s " % (cmd, n_threads, other_opts, program_cmd)
+        else:
+            cmd = "%s -n %d %s " % (cmd, n_threads, program_cmd)
         return cmd
 
     def assemble_command(self):
