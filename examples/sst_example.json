@@ -6,9 +6,11 @@
     "mpi":false,
     "mpi_opts": {
       "mpi_exe": "mpirun",
-      "n": 6
+      "n": 6,
+      "other_opts": ""
     },
     "config_file": "temp",
+    "config_dir" : "",
     "dump_config": true,
     "output_as": "file",
     "output_dir": "time",
