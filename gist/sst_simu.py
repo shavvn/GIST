@@ -425,7 +425,14 @@ class SSTSimulator(simulator.Simulator):
         self.cmd = self.assemble_command()
         gist.utils.dump_param_summary(self.param_list, self.output_base_dir)
         self._add_other_opts_to_params()
-        tmp_fp_list = gist.utils.get_tmp_param_files(self.param_list)
+        config_d = self.sim_opts["config_dir"]
+        if self.sim_opts["config_file"] != "temp":
+            tmp_fp_list = gist.utils.get_param_files(config_d,
+                                                     self.param_list)
+        else:
+            gist.utils.setup_tmp_config_dir(config_d)
+            tmp_fp_list = gist.utils.get_tmp_param_files(self.param_list)
+            
         output_as_file = (self.sim_opts["output_as"] == "file")
         counter = 0
         for tmp_fp in tmp_fp_list:

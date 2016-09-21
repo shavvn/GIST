@@ -351,14 +351,46 @@ def flatten_dict_list(dict_list):
         result.append(flatten_dict(d))
     return result
 
+    
+    
+# TODO the following 3 functions needs heavily refactoring
 
-def get_tmp_param_files(params_list):
+def get_param_files(dir, param_list):
+    """
+    In contrary to get_tmp_param_files, this gets a list of
+    regular files 
+    """
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+    fp_list = []
+    cnt = 0
+    for p in param_list:
+        f_name = os.path.join(dir, "config_%d.json" % cnt)
+        with open(f_name, "wb") as fp:
+            json.dump(p, fp)
+            fp.close()
+            fp_list.append(fp)
+        cnt += 1
+    return fp_list
+    
+
+def setup_tmp_config_dir(dir):
+    if not dir:
+        return
+    else:
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+        tempfile.tempdir = dir
+        return
+    
+
+def get_tmp_param_files(param_list):
     """
     Generate a temp file for each param possible
     :return: list of file pointers
     """
     tmp_fp_list = []
-    for p in params_list:
+    for p in param_list:
         tmp_fp = tempfile.NamedTemporaryFile(delete=False)
         json.dump(p, tmp_fp)
         tmp_fp.close()
