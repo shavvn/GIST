@@ -1,4 +1,5 @@
 import itertools
+import os
 import pandas as pd
 from gist import utils
 
@@ -442,17 +443,30 @@ def _get_labels_from_groups(data_groups, col_index):
     return labels
 
 
-def _get_title_text(keys, vals):
+def _get_title_text(keys, vals, line_len=50):
     """
     get graph title text from key, value pairs,
-    :param keys:
-    :param vals:
-    :return:
+    :param keys: list of keys
+    :param vals: list of vals
+    :param line_len: line length of title, if title length
+        more than this number it will be broken into multiple
+        lines
+    :return: str like "key0=val0key1=val1..."
     """
     title_text = ""
     for key, val in zip(keys, vals):
         title_text += "%s=%s" % (str(key), str(val))
-    return title_text
+    multi_lines = len(title_text) / line_len
+    if multi_lines == 0:
+        return title_text
+    else:
+        new_title = ""
+        for i in range(multi_lines):
+            front = i * line_len
+            end = (i + 1) * line_len
+            new_title += (title_text[front:end] + os.linesep)
+        new_title += title_text[multi_lines*line_len:]
+        return new_title
 
 
 def get_plotable_data(df, result_cols, ignored_cols=[]):

@@ -49,3 +49,18 @@ class AnalysisTest(unittest.TestCase):
     def test_move_bw_to_index(self):
         new_df = analysis.move_bw_unit_to_index(self.df)
         self.assertEqual(new_df.loc[0, "bandwidth(GB/s)"], 4.0)
+
+    def test_get_title_text(self):
+        keys = ["bw", "lat", "exe_time"]
+        vals = ["1GB/s", "1ns", "1us"]
+        t = analysis._get_title_text(keys, vals)
+        self.assertEqual(t, "bw=1GB/slat=1nsexe_time=1us")
+
+    def test_get_title_text_multiline(self):
+        keys = ["bw", "lat", "exe_time"]
+        vals = ["1GB/s", "1ns", "1us"]
+        t = analysis._get_title_text(keys, vals, line_len=10)
+        tgt_title = "bw=1GB/sla" + os.linesep + \
+                    "t=1nsexe_t" + os.linesep +\
+                    "ime=1us"
+        self.assertEqual(t, tgt_title)
