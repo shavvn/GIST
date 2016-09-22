@@ -126,7 +126,7 @@ def lines(params, fig_format="png", output_dir="."):
         # maybe do sanity check for x y
         ax.plot(x, y, linewidth=2, marker=markers[cnt], markersize=8)
         cnt += 1
-    ax.set_title(params["title"])
+    ax = _set_title(ax, params["title"])
     ax.legend(params["legends"], loc="best")
     ax.set_xlabel(params["x_label"])
     ax.set_ylabel(params["y_label"])
