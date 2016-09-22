@@ -56,11 +56,3 @@ class AnalysisTest(unittest.TestCase):
         t = analysis._get_title_text(keys, vals)
         self.assertEqual(t, "bw=1GB/slat=1nsexe_time=1us")
 
-    def test_get_title_text_multiline(self):
-        keys = ["bw", "lat", "exe_time"]
-        vals = ["1GB/s", "1ns", "1us"]
-        t = analysis._get_title_text(keys, vals, line_len=10)
-        tgt_title = "bw=1GB/sla" + os.linesep + \
-                    "t=1nsexe_t" + os.linesep +\
-                    "ime=1us"
-        self.assertEqual(t, tgt_title)
