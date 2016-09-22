@@ -103,9 +103,26 @@ def save_fig(fig, out_dir, name, fig_format):
     return fig
 
 
-def lines(params, fig_format="png", output_dir="."):
+def lines_save(params, fig_format="png", output_dir="."):
+    """
+    plot line graph and then save, plot based on params, save in
+    designated dir and format, close fig when done.
+    :param fig_format: figure format, "png" or "pdf
+    :param output_dir: directory  where figs will be saved
+    :return: none for now
+    """
+    fig, ax = plt.subplots(1, 1)
+    if not lines(ax, params):
+        print "failed to plot scatter graph!"
+        return False
+    fig = save_fig(fig, output_dir, params["save_name"], fig_format)
+    plt.close(fig)
+
+
+def lines(ax, params):
     """
     plot lines from a param dict
+    :param ax: matplotlib axes obj
     :param params: dict, should have following keys:
         {
             "title": # title of graph,
@@ -120,7 +137,6 @@ def lines(params, fig_format="png", output_dir="."):
     :param output_dir: directory  where figs will be saved
     :return: none for now
     """
-    fig, ax = plt.subplots(1, 1)
     cnt = 0
     for x, y in zip(params["x"], params["y"]):
         # maybe do sanity check for x y
@@ -132,13 +148,28 @@ def lines(params, fig_format="png", output_dir="."):
     ax.set_ylabel(params["y_label"])
     ax.set_xlim(0)
     ax.set_ylim(0)
+
+
+def bars_save(params, fig_format="png", output_dir="."):
+    """
+    plot bar graph and then save, plot based on params, save in
+    designated dir and format, close fig when done.
+    :param fig_format: figure format, "png" or "pdf
+    :param output_dir: directory  where figs will be saved
+    :return: none for now
+    """
+    fig, ax = plt.subplots(1, 1)
+    if not bars(ax, params):
+        print "failed to plot scatter graph!"
+        return False
     fig = save_fig(fig, output_dir, params["save_name"], fig_format)
     plt.close(fig)
 
 
-def bars(params, fig_format="png", output_dir="."):
+def bars(ax, params):
     """
-    plot bar graphs from params
+    plot bars from params dict
+    :param ax: matplotlib axes obj
     :param params: dict, should have the following keys
         {
             "title": # title of graph,
@@ -149,16 +180,13 @@ def bars(params, fig_format="png", output_dir="."):
             "y": # y data,
             "save_name": # save file name
         }
-    :param fig_format: figure format, "png" or "pdf
-    :param output_dir: directory  where figs will be saved
-    :return: none for now
+    :return: False if failed to plot, ax obj otherwise
     """
     if len(params["x"]) == 0:
-        return
+        return False
     if len(params["x"][0]) <= 1:
-        return
+        return False
     else:
-        fig, ax = plt.subplots(1, 1)
         x_ticks = []
         x_ticklabels = []
         tick = 0
@@ -190,8 +218,7 @@ def bars(params, fig_format="png", output_dir="."):
         ax.legend(params["legends"], loc="best")
         ax.set_xlabel(params["x_label"])
         ax.set_ylabel(params["y_label"])
-        fig = save_fig(fig, output_dir, params["save_name"], fig_format)
-        plt.close(fig)
+        return ax
 
 
 def bars_3d(params, fig_format="png", output_dir="."):
@@ -217,7 +244,7 @@ def scatter_save(params, fig_format="png", output_dir="."):
     if not scatter(ax, params):
         print "failed to plot scatter graph!"
         return False
-    fig = save_fig(fig, output_dir, fig_format)
+    fig = save_fig(fig, output_dir, params["save_name"], fig_format)
     plt.close(fig)
 
 
@@ -239,7 +266,7 @@ def scatter(ax, params):
     TODO the thing is how to determine the data structure, should
     it be structured so that it's easy to label(legend) or just be
     plain simple...
-    :return:
+    :return: False if failed to plot, ax obj otherwise
     """
     return ax
 

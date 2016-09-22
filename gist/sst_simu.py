@@ -385,11 +385,11 @@ def plot_ember_summary(summary_csv, output_dir_base):
                 else:
                     out_dir = os.path.join(output_dir_base, sub_grp)
                     for graph_data in grp_data:
-                        plot.bars(graph_data, output_dir=out_dir)
+                        plot.bars_save(graph_data, output_dir=out_dir)
             else:
                 out_dir = os.path.join(output_dir_base, sub_grp)
                 for graph_data in grp_data:
-                    plot.lines(graph_data, output_dir=out_dir)
+                    plot.lines_save(graph_data, output_dir=out_dir)
 
 
 class SSTSimulator(simulator.Simulator):
