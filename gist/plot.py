@@ -46,12 +46,37 @@ colors = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
           (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
 
 # Scale the RGB values to the [0, 1] range, which is the format matplotlib accepts.
-for i in range(len(colors)):
-    r, g, b = colors[i]
-    colors[i] = (r / 255., g / 255., b / 255.)
+for c in range(len(colors)):
+    r, g, b = colors[c]
+    colors[c] = (r / 255., g / 255., b / 255.)
 
 
 plt.style.use('ggplot')
+
+
+def save_fig(fig, out_dir, name, fig_format):
+    """
+    save a figure
+    :param fig: matplotlib fig handler
+    :param out_dir: output dir, will be created if not exists
+    :param name: output name, could contain suffix ".png" or ".pdf" or not
+    :param fig_format: "png" and "pdf" only
+    :return: same fig handler
+    """
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
+    output_name = os.path.join(out_dir, name)
+    if ".%s" % fig_format in name:
+        pass
+    else:
+        if fig_format == "png":
+            output_name += ".png"
+        elif fig_format == "pdf":
+            output_name += ".pdf"
+        else:
+            exit("invalid output format!")
+    fig.savefig(output_name, format=fig_format)
+    return fig
 
 
 def lines(params, fig_format="png", output_dir="."):
@@ -83,16 +108,7 @@ def lines(params, fig_format="png", output_dir="."):
     ax.set_ylabel(params["y_label"])
     ax.set_xlim(0)
     ax.set_ylim(0)
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    output_name = os.path.join(output_dir, params["save_name"])
-    if fig_format == "png":
-        output_name += ".png"
-    elif fig_format == "pdf":
-        output_name += ".pdf"
-    else:
-        exit("invalid output format!")
-    fig.savefig(output_name, format=fig_format)
+    fig = save_fig(fig, output_dir, params["save_name"], fig_format)
     plt.close(fig)
 
 
@@ -141,6 +157,7 @@ def bars(params, fig_format="png", output_dir="."):
             ax.bar(x_pos, height=y, width=bar_width, color=colors[cnt])
             offset += bar_width
             cnt += 1
+        # scale x_ticks for grouped bars and then move to center a little
         x_ticks = [x * dist for x in x_ticks]
         x_ticks = [x + bar_width for x in x_ticks]
         ax.set_xticks(x_ticks)
@@ -149,16 +166,7 @@ def bars(params, fig_format="png", output_dir="."):
         ax.legend(params["legends"], loc="best")
         ax.set_xlabel(params["x_label"])
         ax.set_ylabel(params["y_label"])
-        if not os.path.exists(output_dir):
-            os.mkdir(output_dir)
-        output_name = os.path.join(output_dir, params["save_name"])
-        if fig_format == "png":
-            output_name += ".png"
-        elif fig_format == "pdf":
-            output_name += ".pdf"
-        else:
-            exit("invalid output format!")
-        fig.savefig(output_name, format=fig_format)
+        fig = save_fig(fig, output_dir, params["save_name"], fig_format)
         plt.close(fig)
 
 
