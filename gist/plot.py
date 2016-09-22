@@ -203,3 +203,43 @@ def bars_3d(params, fig_format="png", output_dir="."):
     """
     return
 
+
+def scatter_save(params, fig_format="png", output_dir="."):
+    """
+    plot scatter graph and then save, plot based on params, save in
+    designated dir and format, close fig when done.
+    :param params: graph params, see scatter() for more detail
+    :param fig_format: figure format, "png" or "pdf
+    :param output_dir: directory  where figs will be saved
+    :return:
+    """
+    fig, ax = plt.subplots(1, 1)
+    if not scatter(ax, params):
+        print "failed to plot scatter graph!"
+        return False
+    fig = save_fig(fig, output_dir, fig_format)
+    plt.close(fig)
+
+
+def scatter(ax, params):
+    """
+    plot a scatter graph to axes based on params
+    :param ax: matplotlib axes objects
+    :param params: dict, should have the following keys
+        {
+            "title": # title of graph,
+            "legends": # legends for multiple groups of points,
+            "x_label": # x axis label,
+            "y_label": # y axis label,
+            "x": # x data, could be 2D list, inner list represents
+                 # a group of points
+            "y": # y data,
+            "save_name": # save file name
+        }
+    TODO the thing is how to determine the data structure, should
+    it be structured so that it's easy to label(legend) or just be
+    plain simple...
+    :return:
+    """
+    return ax
+
