@@ -107,6 +107,7 @@ def lines_save(params, fig_format="png", output_dir="."):
     """
     plot line graph and then save, plot based on params, save in
     designated dir and format, close fig when done.
+    :param params: graph params, see lines() for more detail
     :param fig_format: figure format, "png" or "pdf
     :param output_dir: directory  where figs will be saved
     :return: none for now
@@ -154,6 +155,7 @@ def bars_save(params, fig_format="png", output_dir="."):
     """
     plot bar graph and then save, plot based on params, save in
     designated dir and format, close fig when done.
+    :param params: graph params, see bars() for more detail
     :param fig_format: figure format, "png" or "pdf
     :param output_dir: directory  where figs will be saved
     :return: none for now
