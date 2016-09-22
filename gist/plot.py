@@ -35,7 +35,7 @@ markers = {  # this is a copy from matplotlib.markers.py ...
 hatches = ["/", "\\", "|", "-", "+", "x", "o", "O", ".", "*"]
 
 
-# color scheme credit to
+# color scheme courtesy to
 # http://www.randalolson.com/2014/06/28/\
 # how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
 
@@ -52,6 +52,30 @@ for c in range(len(colors)):
 
 
 plt.style.use('ggplot')
+
+
+def _set_title(ax, title_text, max_len=60):
+    """
+    this function handles the situations where title gets too long
+    and got cut off at the edge of the graph. this will fold the title
+    into multiple lines and then call ax.set_title() function
+    :param ax: matplotlib axes handle
+    :param title_text: title text
+    :param max_len: max line length the lines will be broken into
+    :return: same axes object
+    """
+    multi_lines = len(title_text) / max_len
+    if multi_lines == 0:
+        ax.set_title(title_text)
+    else:
+        new_title = ""
+        for i in range(multi_lines):
+            front = i * max_len
+            end = (i + 1) * max_len
+            new_title += (title_text[front:end] + os.linesep)
+        new_title += title_text[multi_lines * max_len:]
+        ax.set_title(new_title)
+    return ax
 
 
 def save_fig(fig, out_dir, name, fig_format):
@@ -162,7 +186,7 @@ def bars(params, fig_format="png", output_dir="."):
         x_ticks = [x + bar_width for x in x_ticks]
         ax.set_xticks(x_ticks)
         ax.set_xticklabels(x_ticklabels, ha="center", rotation=45)
-        ax.set_title(params["title"])
+        ax = _set_title(ax, params["title"])
         ax.legend(params["legends"], loc="best")
         ax.set_xlabel(params["x_label"])
         ax.set_ylabel(params["y_label"])
