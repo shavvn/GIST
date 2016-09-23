@@ -12,6 +12,54 @@ import pandas as pd
 import shutil
 
 
+logger_name = "gist"
+logger_level = logging.ERROR
+logger_initialized = False
+
+
+def get_logger():
+    """
+    :return: same logger as inited by init_logger()
+    """
+    return logging.getLogger(logger_name)
+
+
+def init_logger(name="", level=""):
+    """
+    Initialize a logger that can be used by all modules by later calling
+    get_logger(), should only be called once, enforced by
+    logger_initialized
+    :param name: name of the logger
+    :param level: logging level of the logger, by default logging.ERROR
+    :return: a logger
+    """
+    global logger_name
+    global logger_level
+    global logger_initialized
+
+    if logger_initialized:
+        return get_logger()
+    else:
+        logger_initialized = True
+
+    if name:
+        logger_name = name
+    logger = logging.getLogger(logger_name)
+
+    s_handler = logging.StreamHandler()
+    if level:
+        logger_level = level
+    s_handler.setLevel(logger_level)
+
+    formatter = logging.Formatter("%(module)s-%(levelname)s: %(message)s")
+    s_handler.setFormatter(formatter)
+
+    logger.addHandler(s_handler)
+    logger.setLevel(logger_level)
+
+    return logger
+
+
 def get_time_str():
     """
     get a str of current time down to minutes
@@ -91,21 +139,6 @@ def _byteify(data, ignore_dicts=False):
     return data
 
 
-def setup_logger(name, level):
-    """ setup logger for the entire project
-    """
-    logger = logging.getLogger(name)
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter("%(module)s-%(levelname)s: %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(level)
-
-
-def get_default_logger():
-    return logging.getLogger("gist")
-
-
 def replace_special_char(input_str):
     """
     replace special characters in input string, this is useful when
@@ -121,120 +154,83 @@ def replace_special_char(input_str):
     return new_string
 
 
-class ArgParser(object):
-    """ Command line argument parser using built-in argparse
-    takes the args string as input
-    An ArgParser object should be able to determine the following things
-    after parsing the args:
-    1. flags such as debug, verbose
-    (maybe should also set up logger here?)
-    2. input file / files
-    3. output file / files
-    e.g.:
-    arg_parser = ArgParser(sys.argv[1:])
+def add_default_arg_parser():
     """
-    
-    def __init__(self, arg_str):
-        """ initialize parser
-        have args ready in self.args
-        """
-        self.parser = argparse.ArgumentParser(description="args to parse, \
-                                              type --help for more info")
-        self.parser.add_argument("--output-dir",
-                                 help="output directory", 
-                                 default="./examples/")
-        self.parser.add_argument("--input-dir",
-                                 help="input dir contains all input files",
-                                 default="./examples/")
-        self.parser.add_argument("--list-file",
-                                 help="input file contains list of file dir + names",
-                                 default="all_csv_files.txt")
-        self.parser.add_argument("input", nargs="*",
-                                 help="the names of the input files")
-        self.parser.add_argument("--output",
-                                 help="name of output file",
-                                 default="results.csv")
-        self.parser.add_argument("--format",
-                                 help="The output format of the graph, "
-                                      "either pdf or png",
-                                 default="png", type=str, choices=["pdf", "png"])
-        self.parser.add_argument("-pdf", help="set output format to pdf",
-                                 action="store_true")
-        self.parser.add_argument("-png", help="set output format to png",
-                                 action="store_true")
-        self.parser.add_argument("-v", "--verbose", help="output verbose",
-                                 action="store_true")
-        self.parser.add_argument("-d", "--debug", help="whether to turn on debug",
-                                 action="store_true")
-        self.args = self.parser.parse_args(arg_str)
-        log_level = logging.WARNING  # by default
-        if self.is_verbose():
-            log_level = logging.INFO
-        if self.is_debug():
-            log_level = logging.DEBUG
-        setup_logger("gist", log_level)
-        self.logger = logging.getLogger("gist")
-        
-    def is_debug(self):
-        return self.args.debug
-        
-    def is_verbose(self):
-        return self.args.verbose
+    very commonly used arg parsers
+    :return:
+    """
+    parser = argparse.ArgumentParser(description="args to parse, \
+                                                  type --help for more info")
+    parser.add_argument("--output-dir",
+                        help="output directory",
+                        default="./examples/")
+    parser.add_argument("--input-dir",
+                        help="input dir contains all input files",
+                        default="./examples/")
+    parser.add_argument("--list-file",
+                        help="file contains list of actual input files",
+                        default="all_csv_files.txt")
+    parser.add_argument("input",
+                        nargs="*",
+                        help="the names of the input files")
+    parser.add_argument("--output",
+                        help="name of output file",
+                        default="results.csv")
+    parser.add_argument("--format",
+                        help="The output format of the graph, "
+                             "either pdf or png",
+                        default="png", type=str, choices=["pdf", "png"])
+    parser.add_argument("-pdf", help="set output format to pdf",
+                        action="store_true")
+    parser.add_argument("-png", help="set output format to png",
+                        action="store_true")
+    parser.add_argument("-v", "--verbose", help="output verbose",
+                        action="store_true")
+    parser.add_argument("-d", "--debug", help="whether to turn on debug",
+                        action="store_true")
+    return parser
 
-    def get_logger(self):
-        return self.logger
-        
-    def get_input_files(self, file_type=""):
-        """
-        get input files to be processing from args, either csv file(s),
-        or a file containing a list of file names to be processed
-        or an input dir containing all files to be processed
-        :param file_type: the post fix used to filter file types
-        :return: a list of file names to be processed
-        """
-        f_list = []
-        if self.args.input:
-            f_list = self.args.input
-            for f in f_list:
-                if not os.path.exists(f):
-                    self.logger.error("Input file %s doesn't exist!" % f)
-                    sys.exit(1)
-        elif self.args.input_dir:
-            if os.path.exists(self.args.input_dir):
-                in_dir = self.args.input_dir
-                all_files = os.listdir(in_dir)
-                for each_file in all_files:
-                    if os.path.isfile(each_file):
-                        f_list.append(in_dir + "/" + each_file)
-            else:
-                self.logger.error("Input dir doesn't exist!")
-                sys.exit(1)
-        elif self.args.list_file:
-            if os.path.isfile(self.args.list_file):
-                for line in open(self.args.list_file, "r"):
-                    f_list.append(line.rstrip())  # get rids of end of line
-            else:
-                self.logger.error("Input file doesn't exist!")
-                sys.exit(1)
+
+def get_input_files_from_args(args, file_type=""):
+    """
+    get input files to be processing from args, either csv file(s),
+    or a file containing a list of file names to be processed
+    or an input dir containing all files to be processed
+    :param args: args have been parsed from parse_args()
+    :param file_type: the post fix used to filter file types
+    :return: a list of file names to be processed
+    """
+    f_list = []
+    if args.input:
+        f_list = args.input
+        for f in f_list:
+            if not os.path.exists(f):
+                sys.exit("path not exists")
+    elif args.input_dir:
+        if os.path.exists(args.input_dir):
+            in_dir = args.input_dir
+            all_files = os.listdir(in_dir)
+            for each_file in all_files:
+                if os.path.isfile(each_file):
+                    f_list.append(in_dir + "/" + each_file)
         else:
-            self.logger.warn("No input file specified!")
-            sys.exit(1)
-        if not file_type:
-            return f_list
+            sys.exit("Input dir doesn't exist!")
+    elif args.list_file:
+        if os.path.isfile(args.list_file):
+            for line in open(args.list_file, "r"):
+                f_list.append(line.rstrip())  # get rids of end of line
         else:
-            filtered_list = []
-            for f in f_list:
-                if file_type in f:
-                    filtered_list.append(f)
-            return filtered_list
-    
-    def get_output_dir(self):
-        if self.args.output_dir:
-            if not os.path.exists(self.args.output_dir):
-                self.logger.warning("output dir not exist, \
-                                     creating one for you...")
-                os.mkdir(self.args.output_dir)
-        return self.args.output_dir
+            sys.exit("Input file doesn't exist!")
+    else:
+        print "No input file specified!"
+    if not file_type:
+        return f_list
+    else:
+        filtered_list = []
+        for f in f_list:
+            if file_type in f:
+                filtered_list.append(f)
+        return filtered_list
 
 
 def permute_params(param_dict):
@@ -328,6 +324,16 @@ def get_key_val_in_nested_dict(nested_dict):
 def flatten_dict(nested_d):
     """
     flatten nested dict, NOTE some of the keys will be lost
+    e.g. for a nested dict
+    p = {
+            "foo": 1,
+            "bar": {
+                "duh": 4,
+                "huh": 6,
+                "hmm": 9
+            }
+        }
+    should return {foo:1, duh:4, huh:6, hmm:9}
     :param nested_d: nested dict
     :return: flattened dict
     """
@@ -351,9 +357,9 @@ def flatten_dict_list(dict_list):
         result.append(flatten_dict(d))
     return result
 
-    
-    
+
 # TODO the following 3 functions needs heavily refactoring
+
 
 def get_param_files(dir, param_list):
     """

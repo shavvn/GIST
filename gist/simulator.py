@@ -7,17 +7,6 @@ import sys
 import gist.utils
 
 
-class Simulation(object):
-    """ Top Level Class
-    Should be able to do something like:
-    sim = Simulation(simulator="sst", config="config.json"
-                      output_dir="./examples/")
-    sim.run(mpi=true, mpi_opts="-n 4")
-    sim.analysis(output="results.csv")
-    sim.visual(format="png", output_dir="./examples/graphs")
-    """
-
-
 class Simulator(object):
     """
     Generic Simulator Class, should have the following interfaces:
@@ -32,7 +21,7 @@ class Simulator(object):
         self.param_list = []
         self.sim_opts = {}
         self.params = {}
-        self.logger = gist.utils.get_default_logger()
+        self.logger = gist.utils.get_logger()
         if config_file_name:
             with open(config_file_name) as config_f:
                 self.configs = gist.utils.json_to_dict(config_f)
