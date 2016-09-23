@@ -21,6 +21,8 @@ def get_logger():
     """
     :return: same logger as inited by init_logger()
     """
+    if not logger_initialized:
+        return init_logger()
     return logging.getLogger(logger_name)
 
 
