@@ -115,6 +115,7 @@ def lines_save(params, fig_format="png", output_dir="."):
     fig, ax = plt.subplots(1, 1)
     if not lines(ax, params):
         print "failed to plot scatter graph!"
+        plt.close(fig)
         return False
     fig = save_fig(fig, output_dir, params["save_name"], fig_format)
     plt.close(fig)
@@ -136,7 +137,7 @@ def lines(ax, params):
         }
     :param fig_format: figure format, "png" or "pdf
     :param output_dir: directory  where figs will be saved
-    :return: none for now
+    :return: False if failed to plot, ax obj otherwise
     """
     cnt = 0
     for x, y in zip(params["x"], params["y"]):
@@ -149,6 +150,7 @@ def lines(ax, params):
     ax.set_ylabel(params["y_label"])
     ax.set_xlim(0)
     ax.set_ylim(0)
+    return ax
 
 
 def bars_save(params, fig_format="png", output_dir="."):
@@ -163,6 +165,7 @@ def bars_save(params, fig_format="png", output_dir="."):
     fig, ax = plt.subplots(1, 1)
     if not bars(ax, params):
         print "failed to plot scatter graph!"
+        plt.close(fig)
         return False
     fig = save_fig(fig, output_dir, params["save_name"], fig_format)
     plt.close(fig)
