@@ -399,7 +399,9 @@ def _pd_data_valid(pd_obj):
         return False
     elif all(pd_obj == -1):
         return False
-    elif len(pd_obj) <= 1:
+    elif pd_obj.count() < 2:
+        # count() here also eliminate those series with only 1 valid data point
+        # while all others are np.nan
         return False
     else:
         return True

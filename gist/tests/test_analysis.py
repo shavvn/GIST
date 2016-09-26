@@ -1,5 +1,6 @@
 import os
 import unittest
+import numpy as np
 import pandas as pd
 from .. import analysis
 
@@ -56,3 +57,13 @@ class AnalysisTest(unittest.TestCase):
         t = analysis._get_title_text(keys, vals)
         self.assertEqual(t, "bw=1GB/slat=1nsexe_time=1us")
 
+    def test_pd_data_valid(self):
+        s = pd.Series([np.nan, np.nan])
+        v = analysis._pd_data_valid(s)
+        self.assertFalse(v)
+        s = pd.Series([np.nan, np.nan, "blah"])
+        v = analysis._pd_data_valid(s)
+        self.assertFalse(v)
+        s = pd.Series([np.nan, np.nan, "blah", "blah"])
+        v = analysis._pd_data_valid(s)
+        self.assertTrue(v)
