@@ -96,11 +96,21 @@ def get_dragonfly_radix(shape_str):
 def cal_torus_radix(shape_str):
     """
     return radix for a given shape of a Torus network
-    :param shape_str: formatted as "4x4x4"
-    :return: radix, assuming width is 1 all the time
+    :param shape_str: formatted as "4x4x4:1:1", which is
+        dims:local_port:width. If an old fashion "axbxc" format
+        is passed into this then assume local and width are all 1
+    :return: radix, assuming
     """
-    dim = shape_str.count("x")
-    radix = 2 * (dim + 1)
+    try:
+        shape, local, width = shape_str.split(":")
+    except ValueError:
+        local = 1
+        width = 1
+        shape = shape_str
+    local = int(local)
+    width = int(width)
+    dim = shape.count("x") + 1
+    radix = 2 * dim * width + local
     return radix
 
 
