@@ -1,4 +1,5 @@
 import itertools
+import numpy as np
 import pandas as pd
 from gist import utils
 
@@ -43,7 +44,7 @@ def move_bw_unit_to_index(df):
     for col in new_df:
         if new_df[col].dtype == 'O':
             bw_rows = new_df[col].str.contains(r'\d+\.*\d*\s*GB/s')
-            if not all(bw_rows == False):
+            if bw_rows.any():
                 # use .loc to make sure it's operated on original copy (new_df)
                 # because the inplace flag doesn't always work as it should, wtf...
                 new_df.loc[bw_rows, col] = new_df[bw_rows][col].replace(regex=True, inplace=False,
@@ -398,7 +399,9 @@ def _pd_data_valid(pd_obj):
         return False
     elif all(pd_obj == -1):
         return False
-    elif len(pd_obj) <= 1:
+    elif pd_obj.count() < 2:
+        # count() here also eliminate those series with only 1 valid data point
+        # while all others are np.nan
         return False
     else:
         return True
@@ -476,46 +479,46 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
     plotable_cols = find_multi_val_cols(df, ignore_index_col=True,
                                         exception_cols=(res_cols + ignored_cols))
     graph_params = {}
-    for y_col in res_cols:
-        for x_col in plotable_cols:
-            sub_dir_name = utils.replace_special_char(y_col)
-            sub_dir_name += "_vs_"
-            sub_dir_name += utils.replace_special_char(x_col)
-            graph_params[sub_dir_name] = []
-            other_cols = [item for item in plotable_cols if item != x_col]
-            # pick one metric to plot different lines while keeping all others same
-            for line_col in other_cols:
-                group_cols = [item for item in other_cols if item != line_col]
-                graph_groups = df.groupby(group_cols)
-                # each group represent a graph
-                g_cnt = 0
-                for graph_name_vals, graph_group in graph_groups:
-                    param = {}
-                    if _pd_data_valid(graph_group[y_col]) and \
-                       _pd_data_valid(graph_group[x_col]) and \
-                       _pd_data_valid(graph_group[line_col]):
-                        sorted_graph = graph_group.sort_values(by=x_col,
-                                                               ascending=True)
-                        lines = sorted_graph.groupby(line_col)
-                        labels = _get_labels_from_groups(lines, line_col)
-                        x_vals, y_vals = _get_x_y_from_groups(lines, x_col, y_col)
-                        if x_vals and y_vals:
-                            title = _get_title_text(group_cols, graph_name_vals)
-                            output_name = utils.replace_special_char(line_col)
-                            output_name += "_%d" % g_cnt
-                            param["title"] = title
-                            param["legends"] = labels
-                            param["x"] = x_vals
-                            param["y"] = y_vals
-                            param["x_label"] = x_col
-                            param["y_label"] = y_col
-                            param["save_name"] = output_name
-                            graph_params[sub_dir_name].append(param)
-                            g_cnt += 1
-                        else:
-                            pass
-                    else:
-                        pass
+
+    g_cnt = 0
+
+    for x_col, line_col in itertools.permutations(plotable_cols, r=2):
+        other_cols = [x for x in plotable_cols if x not in [x_col, line_col]]
+        groups = df.groupby(other_cols)
+        for index_vals, group in groups:
+            for y_col in res_cols:
+
+                sub_dir_name = utils.replace_special_char(y_col)
+                sub_dir_name += "_vs_"
+                sub_dir_name += utils.replace_special_char(x_col)
+
+                if sub_dir_name not in graph_params:
+                    graph_params[sub_dir_name] = []
+                    g_cnt = 0
+
+                if _pd_data_valid(group[x_col]) and \
+                   _pd_data_valid(group[y_col]) and \
+                   _pd_data_valid(group[line_col]):
+                    sorted_group = group.sort_values(by=x_col, ascending=False)
+                    lines = sorted_group.groupby(line_col)
+                    labels = _get_labels_from_groups(lines, line_col)
+                    x_vals, y_vals = _get_x_y_from_groups(lines, x_col, y_col)
+
+                    if x_vals and y_vals:
+                        params = {}
+
+                        title = _get_title_text(other_cols, index_vals)
+                        output_name = utils.replace_special_char(line_col)
+                        output_name += "_%d" % g_cnt
+                        params["title"] = title
+                        params["legends"] = labels
+                        params["x"] = x_vals
+                        params["y"] = y_vals
+                        params["x_label"] = x_col
+                        params["y_label"] = y_col
+                        params["save_name"] = output_name
+                        graph_params[sub_dir_name].append(params)
+                        g_cnt += 1
     return graph_params
 
 
