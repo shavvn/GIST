@@ -469,10 +469,11 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
     title, output_dir, output_name, etc.
     :param df: input dataframe
     :param result_cols:list of columns in df that are actually results,
-    these cols will not be plotted on x-axis
+        these cols will not be plotted on x-axis
     :param ignored_cols: columns that are ignored, usually those with variants
-    but don't matter
-    :return: a list of dicts, each should contain enough data to plot
+        but don't matter
+    :return: a dict of keys as sub classes and values are lists of params that
+        could be used to plot graphs
     """
     # sanity check to make sure inputs are valid
     res_cols = [col for col in result_cols if col in df]
@@ -480,7 +481,8 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
                                         exception_cols=(res_cols + ignored_cols))
     graph_params = {}
 
-    g_cnt = 0
+    # maintain a counter for each sub_dir
+    g_counters = {}
 
     for x_col, line_col in itertools.permutations(plotable_cols, r=2):
         other_cols = [x for x in plotable_cols if x not in [x_col, line_col]]
@@ -494,7 +496,7 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
 
                 if sub_dir_name not in graph_params:
                     graph_params[sub_dir_name] = []
-                    g_cnt = 0
+                    g_counters[sub_dir_name] = 0
 
                 if _pd_data_valid(group[x_col]) and \
                    _pd_data_valid(group[y_col]) and \
@@ -506,7 +508,6 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
 
                     if x_vals and y_vals:
                         params = {}
-
                         title = _get_title_text(other_cols, index_vals)
                         output_name = utils.replace_special_char(line_col)
                         output_name += "_%d" % g_cnt
@@ -518,7 +519,7 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
                         params["y_label"] = y_col
                         params["save_name"] = output_name
                         graph_params[sub_dir_name].append(params)
-                        g_cnt += 1
+                        g_counters[sub_dir_name] += 1
     return graph_params
 
 
