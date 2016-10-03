@@ -470,9 +470,6 @@ def _get_title_text(keys, vals):
     get graph title text from key, value pairs,
     :param keys: list of keys
     :param vals: list of vals
-    :param line_len: line length of title, if title length
-        more than this number it will be broken into multiple
-        lines
     :return: str like "key0=val0key1=val1..."
     """
     title_text = ""
