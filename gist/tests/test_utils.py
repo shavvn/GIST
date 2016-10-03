@@ -7,42 +7,33 @@ class UtilTest(unittest.TestCase):
         fp = open("examples/sst_example.json", "r")
         d = utils.json_to_dict(fp)
         self.assertIsInstance(d, dict)
+        fp.close()
 
     def test_logger_debug(self):
-        arg_parser = utils.ArgParser(["-d"])
-        level = arg_parser.logger.getEffectiveLevel()
+        logger = utils.init_logger(level="DEBUG")
+        level = logger.getEffectiveLevel()
         self.assertEqual(level, 10)
-        self.assertEqual(arg_parser.is_debug(), True)
-
-    def test_logger_verbose(self):
-        arg_parser = utils.ArgParser(["-v"])
-        self.assertEqual(arg_parser.is_verbose(), True)
-        level = arg_parser.logger.getEffectiveLevel()
-        self.assertEqual(level, 20)
-
-    def test_logger_info(self):
-        arg_parser = utils.ArgParser([""])
-        self.assertEqual(arg_parser.is_verbose(), False)
-        self.assertEqual(arg_parser.is_debug(), False)
-        level = arg_parser.logger.getEffectiveLevel()
-        self.assertEqual(level, 30)
 
     def test_get_input_basic(self):
-        arg_parser = utils.ArgParser(["README.md", ".gitignore"])
-        in_files = arg_parser.get_input_files()
+        arg_parser = utils.add_default_arg_parser()
+        args = arg_parser.parse_args(["README.md", ".gitignore"])
+        in_files = utils.get_input_files_from_args(args)
         self.assertEqual(len(in_files), 2)
 
     def test_get_input_type(self):
-        arg_parser = utils.ArgParser(["README.md", ".gitignore"])
-        in_files = arg_parser.get_input_files(file_type=".md")
+        arg_parser = utils.add_default_arg_parser()
+        args = arg_parser.parse_args(["README.md", ".gitignore"])
+        in_files = utils.get_input_files_from_args(args, file_type=".md")
         self.assertEqual(len(in_files), 1)
 
     def test_get_input_from_dir(self):
-        arg_parser = utils.ArgParser(["--input-dir", "."])
-        in_files = arg_parser.get_input_files()
+        arg_parser = utils.add_default_arg_parser()
+        args = arg_parser.parse_args(["--input-dir", "."])
+        in_files = utils.get_input_files_from_args(args)
         self.assertEqual(len(in_files), 3)
-        arg_parser = utils.ArgParser(["--input-dir", "."])
-        in_files = arg_parser.get_input_files(file_type=".md")
+        arg_parser = utils.add_default_arg_parser()
+        args = arg_parser.parse_args(["--input-dir", "."])
+        in_files = utils.get_input_files_from_args(args, file_type=".md")
         self.assertEqual(len(in_files), 1)
 
     def test_find_time_unit(self):
