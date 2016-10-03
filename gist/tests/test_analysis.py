@@ -49,14 +49,27 @@ class AnalysisTest(unittest.TestCase):
         self.df["num_nodes"] = self.df.apply(lambda x: analysis.cal_num_nodes(x["topo"],
                                                                               x["shape"]),
                                              axis=1)
-        # 3D torus
-        self.assertEqual(self.df.loc[0, "num_nodes"], 5832)
-        # 2D torus
-        self.assertEqual(self.df.loc[4, "num_nodes"], 5625)
+        torus_shape = "2x2:2:3"
+        nodes = analysis.cal_torus_nodes(torus_shape)
+        self.assertEqual(nodes, 8)
+        # torus: old fashion
+        torus_old_shape = "2x2"
+        nodes = analysis.cal_torus_nodes(torus_old_shape)
+        self.assertEqual(nodes, 4)
+
         # fattree
-        self.assertEqual(self.df.loc[7, "num_nodes"], 5120)
+        fattree_shape = "4,4:8,8:8,8:20"
+        nodes = analysis.cal_fattree_nodes(fattree_shape)
+        self.assertEqual(nodes, 5120)
+
         # dragonfly
-        self.assertEqual(self.df.loc[10, "num_nodes"], 114582)
+        df_shape = "51:13:13:26"
+        nodes = analysis.cal_dragonfly_nodes(df_shape)
+        self.assertEqual(nodes, 114582)
+        # dragonfly old fashion
+        df_shape = "13x13x26"
+        nodes = analysis.cal_dragonfly_nodes(df_shape)
+        self.assertEqual(nodes, 114582)
 
     def test_move_bw_to_index(self):
         new_df = analysis.move_bw_unit_to_index(self.df)
