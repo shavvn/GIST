@@ -16,8 +16,6 @@ class AnalysisTest(unittest.TestCase):
         self.assertTrue(not any(topo == "fattree" for topo in new_df["topo"]))
 
     def test_calculate_radix(self):
-        self.df["radix"] = self.df.apply(lambda x: analysis.calculate_radix(x["topo"], x["shape"]),
-                                         axis=1)
         # torus
         torus_shape = "2x2:2:3"
         radix = analysis.cal_torus_radix(torus_shape)
@@ -46,9 +44,7 @@ class AnalysisTest(unittest.TestCase):
         self.assertIn("radix", new_df)
 
     def test_cal_num_nodes(self):
-        self.df["num_nodes"] = self.df.apply(lambda x: analysis.cal_num_nodes(x["topo"],
-                                                                              x["shape"]),
-                                             axis=1)
+        # torus
         torus_shape = "2x2:2:3"
         nodes = analysis.cal_torus_nodes(torus_shape)
         self.assertEqual(nodes, 8)
