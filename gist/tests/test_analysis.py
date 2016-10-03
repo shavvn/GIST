@@ -7,28 +7,39 @@ from .. import analysis
 
 class AnalysisTest(unittest.TestCase):
     def setUp(self):
-        self.df = pd.read_csv("gist/tests/ember_output/test_topo_sep.csv")
+        csv_file_in = "gist/tests/ember_output/test_topo_sep.csv"
+        self.df = pd.read_csv(csv_file_in)
 
     def test_separate_topo(self):
         new_df = analysis.separate_topos(self.df)
         self.assertTrue(not any(topo == "torus" for topo in new_df["topo"]))
         self.assertTrue(not any(topo == "fattree" for topo in new_df["topo"]))
 
-    def test_cal_dragonfly_radix(self):
-        self.df["radix"] = self.df[self.df["topo"] == "dragonfly"]["shape"].map(analysis.get_dragonfly_radix)
-        self.assertEqual(self.df.loc[10, "radix"], 51)
-
     def test_calculate_radix(self):
         self.df["radix"] = self.df.apply(lambda x: analysis.calculate_radix(x["topo"], x["shape"]),
                                          axis=1)
-        # 3D torus
-        self.assertEqual(self.df.loc[0, "radix"], 6)
-        # 2D torus
-        self.assertEqual(self.df.loc[4, "radix"], 4)
+        # torus
+        torus_shape = "2x2:2:3"
+        radix = analysis.cal_torus_radix(torus_shape)
+        self.assertEqual(radix, 14)
+        # torus: old fashion
+        torus_old_shape = "2x2"
+        radix = analysis.cal_torus_radix(torus_old_shape)
+        self.assertEqual(radix, 5)
+
         # fattree
-        self.assertEqual(self.df.loc[7, "radix"], 20)
+        fattree_shape = "4,4:8,8:8,8:20"
+        radix = analysis.cal_fattree_radix(fattree_shape)
+        self.assertEqual(radix, 20)
+
         # dragonfly
-        self.assertEqual(self.df.loc[10, "radix"], 51)
+        df_shape = "51:13:13:26"
+        radix = analysis.cal_dragonfly_radix(df_shape)
+        self.assertEqual(radix, 51)
+        # dragonfly old fashion
+        df_shape = "13x13x26"
+        radix = analysis.cal_dragonfly_radix(df_shape)
+        self.assertEqual(radix, 51)
 
     def test_add_radix(self):
         new_df = analysis.add_radix_col(self.df)

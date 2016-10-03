@@ -70,27 +70,21 @@ def move_units_to_index(df):
 
 def cal_dragonfly_radix(shape_str):
     """
-    This works for dragonfly shapes formatted as
-    PxHxA
-    :param shape_str: "PxHxA"
+    This works for dragonfly shapes formatted as R:P:H:A,
+    where R is the already calculated radix so grep it and return
+    Or if the input shape is old fashion "PxHxA" then actually calculate it
+    :param shape_str: R:P:H:A,
+        R=Radix, P=Local Ports, H=Intergroup Links A=Routers per group
     :return: radix
     """
-    nums = shape_str.split("x")
-    nums = map(int, nums)
-    radix = sum(nums) - 1
-    return radix
-
-
-def get_dragonfly_radix(shape_str):
-    """
-    This works for dragonfly shapes formatted as
-    R:P:H:A, where R is the already calculated radix
-    so grep it and return
-    :param shape_str: R:P:H:A
-    :return: radix
-    """
-    radix = int(shape_str.split(":")[0])
-    return radix
+    if "x" in shape_str:
+        nums = shape_str.split("x")
+        nums = map(int, nums)
+        radix = sum(nums) - 1
+        return radix
+    else:
+        radix = int(shape_str.split(":")[0])
+        return radix
 
 
 def cal_torus_radix(shape_str):
@@ -176,7 +170,7 @@ def calculate_radix(topo, shape):
     """
     radix = 0
     if topo == "dragonfly":
-        radix = get_dragonfly_radix(shape)
+        radix = cal_dragonfly_radix(shape)
     elif "torus" in topo:
         radix = cal_torus_radix(shape)
     elif "fattree" in topo:
@@ -221,16 +215,24 @@ def add_radix_col_by_loop(df):
         exit("cannot calculate radix due to lack of shape and topo!")
 
 
-def cal_torus_nodes(shape_str, local_ports=1):
+def cal_torus_nodes(shape_str):
     """
     calculate num of nodes in a torus network
-    :param shape_str: torus shape string, formatted like axbxcxd... each
-        is the number of routers on 1 dimension
+    :param shape_str: formatted as "4x4x4:1:1", which is
+        dims:local_port:width. If an old fashion "axbxc" format
+        is passed into this then assume local and width are all 1
     :param local_ports: number of nodes attached on each router, default 1
     :return: num of nodes
     """
-    dims = [int(x) for x in shape_str.split("x")]
-    num_nodes = local_ports
+    try:
+        shape, local, width = shape_str.split(":")
+    except ValueError:
+        local = 1
+        width = 1
+        shape = shape_str
+    local = int(local)
+    dims = [int(x) for x in shape.split("x")]
+    num_nodes = local
     for x in dims:
         num_nodes *= x
     return num_nodes
@@ -261,7 +263,8 @@ def cal_dragonfly_nodes(shape_str):
     """
     calculate num of nodes in a dragonfly shape string
     :param shape_str: a dragonfly shape str is formatted as follows:
-        p:h:a
+        r:p:h:a
+        r is radix, optional
         p is num of hosts per router
         h is intergroup links per router
         a is num of routers per group
@@ -269,13 +272,20 @@ def cal_dragonfly_nodes(shape_str):
         num of nodes is thus (a*h + 1)*a*p
     :return: num of nodes
     """
-    shapes = [int(x) for x in shape_str.split(":")]
+    if "x" in shape_str:  # might be old fashion "PxHxA"
+        shapes = [int(x) for x in shape_str.split("x")]
+        if len(shapes) != 3:
+            print ("dragonfly shape invalid...%s" % shape_str)
+            return
+    else:
+        shapes = [int(x) for x in shape_str.split(":")]
     if len(shapes) == 3:
         hosts, inter_links, rtrs_per_grp = shapes
     elif len(shapes) == 4:
         radix, hosts, inter_links, rtrs_per_grp = shapes
     else:
-        exit("dragonfly shape not right...")
+        print ("dragonfly shape invalid...%s" % shape_str)
+        return
     num_grps = inter_links * rtrs_per_grp + 1
     nodes = hosts * rtrs_per_grp * num_grps
     return nodes
@@ -520,7 +530,7 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
                         params = {}
                         title = _get_title_text(other_cols, index_vals)
                         output_name = utils.replace_special_char(line_col)
-                        output_name += "_%d" % g_cnt
+                        output_name += "_%d" % g_counters[sub_dir_name]
                         params["title"] = title
                         params["legends"] = labels
                         params["x"] = x_vals
