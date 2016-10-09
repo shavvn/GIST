@@ -479,7 +479,7 @@ def _get_title_text(keys, vals):
     return title_text
 
 
-def get_plotable_data(df, result_cols, ignored_cols=[]):
+def get_plotable_data(df, result_cols, ignored_cols=None):
     """
     get plotable data (2D) from a dataframe, you need to specify which ones
     are results and which cols should be ignored. Will return a list of dicts
@@ -541,7 +541,7 @@ def get_plotable_data(df, result_cols, ignored_cols=[]):
     return graph_params
 
 
-def get_plotable_data_3d(df, result_cols, ignored_cols=[]):
+def get_plotable_data_3d(df, result_cols, ignored_cols=None):
     """
     this so far is dedicated for 3D bars...
     :param df:
