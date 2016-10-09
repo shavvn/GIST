@@ -45,14 +45,14 @@ def move_bw_unit_to_index(df):
         if new_df[col].dtype == 'O':
             bw_rows = new_df[col].str.contains(r'\d+\.*\d*\s*GB/s')
             if bw_rows.any():
-                # use .loc to make sure it's operated on original copy (new_df)
-                # because the inplace flag doesn't always work as it should, wtf...
-                bw_rows = bw_rows.notnull()
-                new_df.loc[bw_rows, col] = new_df[bw_rows][col].replace(regex=True, inplace=False,
-                                                                        to_replace=r'\D', value=r'')
-                new_df.loc[bw_rows, col] = new_df[bw_rows][col].map(lambda x: float(x))
+                new_df[col].replace(regex=True, inplace=True,
+                                    to_replace=r'\D', value=r'')
+
+                new_df[col] = new_df[col].map(float)
+
                 # maybe do MB/s KB/s as well?
                 col_replace_pairs.update({col: col+"(GB/s)"})
+
     new_df.rename(columns=col_replace_pairs, inplace=True)
     return new_df
 
