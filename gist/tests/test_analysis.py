@@ -7,7 +7,7 @@ from .. import analysis
 
 class AnalysisTest(unittest.TestCase):
     def setUp(self):
-        csv_file_in = "gist/tests/ember_output/test_topo_sep.csv"
+        csv_file_in = "examples/example_df.csv"
         self.df = pd.read_csv(csv_file_in)
 
     def test_separate_topo(self):
@@ -69,7 +69,7 @@ class AnalysisTest(unittest.TestCase):
 
     def test_move_bw_to_index(self):
         new_df = analysis.move_bw_unit_to_index(self.df)
-        self.assertEqual(new_df.loc[0, "bandwidth(GB/s)"], 4.0)
+        self.assertEqual(new_df.loc[0, "link_bw(GB/s)"], 1.0)
 
     def test_get_title_text(self):
         keys = ["bw", "lat", "exe_time"]
