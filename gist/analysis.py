@@ -47,6 +47,7 @@ def move_bw_unit_to_index(df):
             if bw_rows.any():
                 # use .loc to make sure it's operated on original copy (new_df)
                 # because the inplace flag doesn't always work as it should, wtf...
+                bw_rows = bw_rows.notnull()
                 new_df.loc[bw_rows, col] = new_df[bw_rows][col].replace(regex=True, inplace=False,
                                                                         to_replace=r'\D', value=r'')
                 new_df.loc[bw_rows, col] = new_df[bw_rows][col].map(lambda x: float(x))
