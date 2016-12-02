@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 
+import numpy as np
 import pandas as pd
 import shutil
 
@@ -80,8 +81,43 @@ def find_time_unit(in_str):
              return [] if not found
     """
     re_str = r'(?P<value>\d+\.*\d*)\s*(?P<unit>s|ms|us|ns|ps)'
-    matches = re.findall(re_str, in_str.lower())
-    return matches
+    if isinstance(in_str, str):
+        matches = re.findall(re_str, in_str.lower())
+        if matches:
+            return matches
+        else:
+            return False
+    else:
+        return False
+
+
+def convert_time_str(in_str, target_unit):
+    time_table = ["ps", "ns", "us", "ms", "s"]
+    tgt_index = 0
+    if target_unit.lower() in time_table:
+        tgt_index = time_table.index(target_unit.lower())
+    else:
+        exit("time unit out of scope")
+
+    matches = find_time_unit(in_str)
+    if matches:
+        assert len(matches) == 1
+        t = float(matches[0][0])
+        u = matches[0][1]
+        src_index = time_table.index(u)
+        mag = src_index - tgt_index
+        mag = 1000. ** mag
+        return t*mag, target_unit.lower()
+    else:
+        return False, target_unit
+
+
+def convert_time_to_ns(in_str):
+    t, u = convert_time_str(in_str, "ns")
+    if t:
+        return t
+    else:
+        return in_str
 
 
 def convert_time_to_us(num_token, unit_token):

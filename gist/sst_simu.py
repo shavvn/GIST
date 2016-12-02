@@ -517,7 +517,6 @@ class SSTAnalysis(object):
 
         if summary_csv:
             if os.path.exists(summary_csv):
-                self.df = pd.read_csv(summary_csv)
                 self.summary_csv = summary_csv
             else:
                 exit("not valid summary csv file input")
@@ -535,6 +534,20 @@ class SSTAnalysis(object):
 
         if log_files:
             self.logs = log_files
+
+    def prep_data(self):
+        self.df = pd.read_csv(self.summary_csv)
+
+        # add a column of num of nodes
+        self.df = self.add_num_nodes_col(self.df)
+
+        # add a column of radix
+        self.df = self.add_radix_col(self.df)
+
+        self.df = analysis.move_bw_unit_to_index(self.df)
+
+        self.df = analysis.move_time_unit_to_header(self.df)
+
 
     @staticmethod
     def separate_topos(df):

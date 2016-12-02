@@ -48,12 +48,29 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(res_2[0][0], "0.5")
         self.assertEqual(res_2[0][1], "ns")
 
+        in_str_3 = "1us"
+        res_3 = utils.find_time_unit(in_str_3)
+        self.assertEqual(len(res_3), 1)
+        self.assertEqual(res_3[0][0], "1")
+        self.assertEqual(res_3[0][1], "us")
+
     def test_find_bw_unit(self):
         in_str = "bw is 10 GB/s and 1GB/s, not 1Gb/s"
         res = utils.find_bw_unit(in_str)
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0][0], "10")
         self.assertEqual(res[0][1], "GB/s")
+
+    def convert_time_str(self):
+        in_str = "1us"
+        t, u = utils.convert_time_str(in_str, "ns")
+        self.assertEqual(t, 1000)
+        self.assertEqual(u, "ns")
+
+        in_str = "100ns"
+        t, u = utils.convert_time_str(in_str, "us")
+        self.assertEqual(t, 0.1)
+        self.assertEqual(u, "us")
 
 if __name__ == '__main__':
     unittest.main()

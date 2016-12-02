@@ -30,3 +30,9 @@ class AnalysisTest(unittest.TestCase):
         s = pd.Series([np.nan, np.nan, "blah", "blah"])
         v = analysis._pd_data_valid(s)
         self.assertTrue(v)
+
+    def test_move_time_to_header(self):
+        df = pd.DataFrame([{"time": "1us", "bw": "1GB/s"},
+                           {"time": "1ns", "bw": "10.1GB/s"}])
+        df = analysis.move_time_unit_to_header(df)
+        self.assertEqual(df.loc[0, "time(ns)"], 1000)

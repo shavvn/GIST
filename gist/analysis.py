@@ -16,7 +16,7 @@ def move_bw_unit_to_index(df):
     :return: a new copy of df that has bw units moved to col label
     """
     # make a new copy to avoid side effects
-    new_df = df.copy()
+    new_df = df.copy(deep=True)
     col_replace_pairs = {}
     for col in new_df:
         if new_df[col].dtype == 'O':
@@ -34,6 +34,17 @@ def move_bw_unit_to_index(df):
     return new_df
 
 
+def move_time_unit_to_header(df):
+    new_df = df.copy(deep=True)
+    replace_pairs = {}
+    for col in new_df:
+        if new_df[col].apply(utils.find_time_unit).any():
+            new_df[col] = new_df[col].map(utils.convert_time_to_ns)
+            replace_pairs[col] = col + "(ns)"
+    new_df.rename(columns=replace_pairs, inplace=True)
+    return new_df
+
+
 def move_units_to_index(df):
     """
     This function should be part of pre-processing before plotting
@@ -44,6 +55,7 @@ def move_units_to_index(df):
     :return: a df that has all units moved to col
     """
     move_bw_unit_to_index(df)
+    move_time_unit_to_header(df)
 
 
 def concat_summarys(file_list, output_name="super_summary.csv"):
