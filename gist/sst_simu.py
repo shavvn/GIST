@@ -370,9 +370,9 @@ def plot_ember_summary(summary_csv, output_dir_base):
     df = pd.read_csv(summary_csv)
     df = analysis.move_bw_unit_to_index(df)
     df = df.replace(np.nan, -1)
-    df = analysis.separate_topos(df)
-    df = analysis.add_radix_col(df)
-    df = analysis.add_num_nodes_col(df)
+    df = SSTAnalysis.separate_topos(df)
+    df = SSTAnalysis.add_radix_col(df)
+    df = SSTAnalysis.add_num_nodes_col(df)
     result_cols = ["exe_time(us)", "real_latency(us)", "real_bandwidth(GB/s)"]
 
     data = analysis.get_plotable_data(df, result_cols=result_cols,
@@ -502,3 +502,354 @@ class SSTSimulator(simulator.Simulator):
         output_name = os.path.join(self.output_base_dir, "summary.csv")
         self.df.to_csv(output_name)
 
+
+class SSTAnalysis(object):
+
+    def __init__(self, summary_csv=None, csv_files=None, log_files=None, output_dir="."):
+        self.df = None
+        self.csvs = []
+        self.logs = []
+        self.summary_csv = ""
+        self.output_dir = output_dir
+
+        if not (summary_csv or csv_files or log_files):
+            exit("must specify inputs")
+
+        if summary_csv:
+            if os.path.exists(summary_csv):
+                self.df = pd.read_csv(summary_csv)
+                self.summary_csv = summary_csv
+            else:
+                exit("not valid summary csv file input")
+
+        if csv_files:
+            if isinstance(csv_files, list):
+                for csv in csv_files:
+                    if os.path.exists(csv):
+                        self.csvs.append(csv)
+            elif isinstance(csv_files, str):
+                if os.path.exists(csv_files):
+                    self.csvs.append(csv_files)
+            else:
+                exit("csv_files should be a file or a list of files")
+
+        if log_files:
+            self.logs = log_files
+
+    @staticmethod
+    def separate_topos(df):
+        """
+        This is sst specific stuff, since torus and fattree should be
+        separated based on their shape (dimensions, levels)
+        :param df: input df
+        :return: df with finer grained topology classification
+        e.g. torus-3d, torus-2d
+        """
+        x_s = df["shape"].str.count("x").unique()
+        for x in x_s:
+            if x > 0:
+                df.ix[(df["topo"] == "torus") &
+                      (df["shape"].str.count("x") == x),
+                      "topo"] = "torus_%d" % (x + 1)
+        colon_s = df["shape"].str.count(":").unique()
+        for x in colon_s:
+            if x > 0:
+                df.ix[(df["topo"] == "fattree") &
+                      (df["shape"].str.count(":") == x),
+                      "topo"] = "fattree_%d" % (x + 1)
+        return df
+
+    @staticmethod
+    def cal_dragonfly_radix(shape_str):
+        """
+        This works for dragonfly shapes formatted as R:P:H:A,
+        where R is the already calculated radix so grep it and return
+        Or if the input shape is old fashion "PxHxA" then actually calculate it
+        :param shape_str: R:P:H:A,
+            R=Radix, P=Local Ports, H=Intergroup Links A=Routers per group
+        :return: radix
+        """
+        if "x" in shape_str:
+            nums = shape_str.split("x")
+            nums = map(int, nums)
+            radix = sum(nums) - 1
+            return radix
+        else:
+            radix = int(shape_str.split(":")[0])
+            return radix
+
+    @staticmethod
+    def cal_torus_radix(shape_str):
+        """
+        return radix for a given shape of a Torus network
+        :param shape_str: formatted as "4x4x4:1:1", which is
+            dims:local_port:width. If an old fashion "axbxc" format
+            is passed into this then assume local and width are all 1
+        :return: radix, assuming
+        """
+        try:
+            shape, local, width = shape_str.split(":")
+        except ValueError:
+            local = 1
+            width = 1
+            shape = shape_str
+        local = int(local)
+        width = int(width)
+        dim = shape.count("x") + 1
+        radix = 2 * dim * width + local
+        return radix
+
+    @staticmethod
+    def cal_fattree_radix(shape_str):
+        """
+        radix for fattree is different from others since the radix
+        of each router might be different, so only return the max
+        here?
+        :param shape_str: formatted as "2,2:4,4:8"
+        :return: max radix of the routers
+        """
+        levels = shape_str.split(":")
+        max_radix = 0
+        for l in levels:
+            radix = sum(map(int, l.split(",")))
+            if radix > max_radix:
+                max_radix = radix
+        return max_radix
+
+    @staticmethod
+    def cal_dia2_radix(shape_str):
+        """
+        for diameter2 graphs shape is simply the local ports: host ports
+        :param shape_str: formatted as "local:host"
+        :return: radix
+        """
+        local, host = map(int, shape_str.split(":"))
+        radix = local + host
+        return radix
+
+    @staticmethod
+    def cal_fishlite_radix(shape_str):
+        """
+        for fishlite graphs radix is simply the local ports + host ports + 1
+        :param shape_str: formatted as "local:host"
+        :return: radix
+        """
+        local, host = map(int, shape_str.split(":"))
+        radix = local + host + 1
+        return radix
+
+    @staticmethod
+    def cal_fishnet_radix(shape_str):
+        """
+        for fishnet graphs radix is simply the local ports*2 + host ports
+        :param shape_str: formatted as "local:host"
+        :return: radix
+        """
+        local, host = map(int, shape_str.split(":"))
+        radix = local * 2 + host
+        return radix
+
+    @staticmethod
+    def calculate_radix(topo, shape):
+        """
+        given a topo and shape, calculate radix using the sub-functions
+        above, to use this function with DataFrame object, do:
+        df["radix"] = df.apply(lambda x: \
+        analysis.calculate_radix(x["topo"], x["shape"]), axis=1)
+        :param topo: topology str
+        :param shape: shape str
+        :return: radix, 0 if cannot recognize
+        """
+        radix = 0
+        if topo == "dragonfly":
+            radix = SSTAnalysis.cal_dragonfly_radix(shape)
+        elif "torus" in topo:
+            radix = SSTAnalysis.cal_torus_radix(shape)
+        elif "fattree" in topo:
+            radix = SSTAnalysis.cal_fattree_radix(shape)
+        elif "diameter2" in topo:
+            radix = SSTAnalysis.cal_dia2_radix(shape)
+        elif "fishlite" in topo:
+            radix = SSTAnalysis.cal_fishlite_radix(shape)
+        elif "fishnet" in topo:
+            radix = SSTAnalysis.cal_fishnet_radix(shape)
+        return radix
+
+    @staticmethod
+    def add_radix_col_by_loop(df):
+        """
+        This is much much slower than add_radix_col
+        just acting as an example, should not be used at all
+        :param df:
+        :return:
+        """
+        if "topo" in df and "shape" in df:
+            new_df = df.copy()
+            for index, row in new_df.iterrows():
+                new_df.loc[index, "radix"] = SSTAnalysis.calculate_radix(row["topo"], row["shape"])
+            return new_df
+        else:
+            exit("cannot calculate radix due to lack of shape and topo!")
+
+    @staticmethod
+    def add_radix_col(df):
+        """
+        add a radix column to df, calculated based on "topo" and "shape" cols
+        :param df: input df, must contain "topo" and "shape" cols
+        :return: a new df with a "radix" column
+        """
+        if "topo" in df and "shape" in df:
+            new_df = df.copy()
+            new_df["radix"] = new_df.apply(lambda x: SSTAnalysis.calculate_radix(x["topo"], x["shape"]),
+                                           axis=1)
+            return new_df
+        else:
+            exit("cannot calculate radix due to lack of shape and topo!")
+
+    @staticmethod
+    def cal_torus_nodes(shape_str):
+        """
+        calculate num of nodes in a torus network
+        :param shape_str: formatted as "4x4x4:1:1", which is
+            dims:local_port:width. If an old fashion "axbxc" format
+            is passed into this then assume local and width are all 1
+        :return: num of nodes
+        """
+        try:
+            shape, local, width = shape_str.split(":")
+        except ValueError:
+            local = 1
+            width = 1
+            shape = shape_str
+        local = int(local)
+        dims = [int(x) for x in shape.split("x")]
+        num_nodes = local
+        for x in dims:
+            num_nodes *= x
+        return num_nodes
+
+    @staticmethod
+    def cal_fattree_nodes(shape_str):
+        """
+        calculate num of nodes in fattree shape string
+        :param shape_str: a fattree shape str is formatted as follows:
+            a,a:b,b:...c
+            different levels are separated by ":", ups and down links in
+            each level is separated by ","
+            num of nodes is calculated by multiplying downs
+        :return: num of nodes
+        """
+        levels = shape_str.split(":")
+        downs = []
+        for l in levels:
+            links = l.split(",")
+            downs.append(int(links[0]))
+        nodes = 1
+        for x in downs:
+            nodes *= x
+        return nodes
+
+    @staticmethod
+    def cal_dragonfly_nodes(shape_str):
+        """
+        calculate num of nodes in a dragonfly shape string
+        :param shape_str: a dragonfly shape str is formatted as follows:
+            r:p:h:a
+            r is radix, optional
+            p is num of hosts per router
+            h is intergroup links per router
+            a is num of routers per group
+            this is the "max" dragonfly setup so num of groups = a*h + 1
+            num of nodes is thus (a*h + 1)*a*p
+        :return: num of nodes
+        """
+        if "x" in shape_str:  # might be old fashion "PxHxA"
+            shapes = [int(x) for x in shape_str.split("x")]
+            if len(shapes) != 3:
+                print ("dragonfly shape invalid...%s" % shape_str)
+                return
+        else:
+            shapes = [int(x) for x in shape_str.split(":")]
+        if len(shapes) == 3:
+            hosts, inter_links, rtrs_per_grp = shapes
+        elif len(shapes) == 4:
+            radix, hosts, inter_links, rtrs_per_grp = shapes
+        else:
+            print ("dragonfly shape invalid...%s" % shape_str)
+            return
+        num_grps = inter_links * rtrs_per_grp + 1
+        nodes = hosts * rtrs_per_grp * num_grps
+        return nodes
+
+    @staticmethod
+    def cal_dia2_nodes(shape_str):
+        """
+        calculate num of nodes in a diameter 2 shape str by a table lookup
+        :param shape_str: formatted as "radix:hosts"
+            num of routers is determined by radix, and multiplied by
+            num of hosts is num of nodes
+        :return: num of nodes
+        """
+        mapping = {
+            "5": 18,
+            "7": 50,
+            "11": 98,
+            "17": 242,
+            "19": 338,
+            "25": 578,
+            "29": 722,
+            "35": 1058,
+            "43": 1682,
+            "47": 1922,
+            "55": 2738,
+            "79": 5618
+        }
+        radix, hosts = shape_str.split(":")
+        nodes = mapping[radix] * int(hosts)
+        return nodes
+
+    @staticmethod
+    def cal_fish_nodes(shape_str):
+        """
+        calculate fishnet/fishlite nodes, based on dia2 graphs
+        :param shape_str: same as dia2
+        :return: num of nodes
+        """
+        nodes = SSTAnalysis.cal_dia2_nodes(shape_str)
+        nodes *= (nodes + 1)
+        return nodes
+
+    @staticmethod
+    def cal_num_nodes(topo, shape):
+        nodes = 0
+        if topo == "dragonfly":
+            nodes = SSTAnalysis.cal_dragonfly_nodes(shape)
+        elif "torus" in topo:
+            nodes = SSTAnalysis.cal_torus_nodes(shape)
+        elif "fattree" in topo:
+            nodes = SSTAnalysis.cal_fattree_nodes(shape)
+        elif "diameter2" in topo:
+            nodes = SSTAnalysis.cal_dia2_nodes(shape)
+        elif "fishlite" in topo:
+            nodes = SSTAnalysis.cal_fish_nodes(shape)
+        elif "fishnet" in topo:
+            nodes = SSTAnalysis.cal_fish_nodes(shape)
+        return nodes
+
+    @staticmethod
+    def add_num_nodes_col(df):
+        """
+        add a column of num of nodes to a df, based on "topo", "shape" cols, and
+        potentially other cols e.g. "torus:local_ports"
+        :param df: input df, must contain "topo" and "shape" cols
+        :return:a new df with a "num_nodes" column
+        """
+        if "topo" in df and "shape" in df:
+            new_df = df.copy()
+            new_df["num_nodes"] = new_df.apply(lambda x: cal_num_nodes(x["topo"],
+                                                                       x["shape"]),
+                                               axis=1)
+            return new_df
+        else:
+            exit("cannot calculate num_nodes due to lack of shape and topo!")
+        return df
