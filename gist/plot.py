@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 this file will eventually look like the polly project I did a while back...
 """
 
+plt.style.use('ggplot')
+
+
 markers = {  # this is a copy from matplotlib.markers.py ...
         '.': 'point',
         # ',': 'pixel',
@@ -35,6 +38,169 @@ markers = {  # this is a copy from matplotlib.markers.py ...
 hatches = ["/", "\\", "|", "-", "+", "x", "o", "O", ".", "*"]
 
 
+class Colors(object):
+
+    def __init__(self, scheme="colorful", ncolors=0):
+        self.colors = []
+        self.type = "colorful"
+        if scheme == "colorful":
+            colors = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
+                      (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
+                      (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
+                      (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
+                      (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
+
+            for c in range(len(colors)):
+                r, g, b = colors[c]
+                colors[c] = (r / 255., g / 255., b / 255.)
+
+            self.colors = colors
+            self.type = scheme
+        elif scheme == "bw" or scheme == "grey":
+            if ncolors == 0:
+                print "number of colors has to be specified for gray/bw colors"
+            else:
+                inc = 248/ncolors  # to very light gray instead of white (256)
+                colors = [c/255. for c in range(0, 248, inc)]
+
+                self.colors = colors
+                self.type = "bw"
+        else:
+            pass
+
+    def __len__(self):
+        return len(self.colors)
+
+    def __getitem__(self, item):
+        return self.colors[item]
+
+
+class Axes2D(object):
+    def __init__(self, axes, **kwargs):
+        self.ax = axes
+        self.params = {
+            "title": "Default Title",
+            "xlabel": "X Axis",
+            "xticks": None,
+            "ylabel": "Y Axis",
+            "yticks": None,
+            "data": None,
+            "color_scheme": "colorful",
+            "legends": False
+        }
+        self.set_params(**kwargs)
+
+    def set_params(self, **kwargs):
+        self.params.update(kwargs)
+
+    def set_title(self, max_len=40):
+        """
+        if title text is too long, split it into max_len chunks and
+        :param max_len: max num of chars per line
+        :return:
+        """
+        title_text = self.params["title"]
+        chunks = [title_text[i:i+max_len] for i in range(0, len(title_text), max_len)]
+        new_title = ""
+        for c in chunks:
+            new_title += (c + os.linesep)
+        self.ax.set_title(new_title)
+
+    def set_x_axis(self):
+        self.ax.xaxis.set_label_position('bottom')
+        self.ax.xaxis.set_ticks_position('bottom')
+        self.ax.set_xlabel(self.params["xlabel"])
+        ticks = self.params["xticks"]
+        if not ticks:
+            pass
+        else:
+            ticks = range(len(ticks))
+            self.ax.set_xticks(ticks)
+            self.ax.set_xticklabels(ticks, ha="center")
+
+        self.ax.set_xlim(0)
+
+    def set_y_axis(self):
+        ticks = self.params["yticks"]
+        self.ax.yaxis.set_label_position('bottom')
+        self.ax.yaxis.set_ticks_position('bottom')
+        self.ax.set_ylabel(self.params["ylabel"])
+        if not ticks:
+            pass
+        else:
+            ticks = range(len(ticks))
+            self.ax.set_yticks(ticks)
+            self.ax.set_yticklabels(self.params["yticks"], va="center")
+        self.ax.set_ylim(0)
+
+
+class Bar(Axes2D):
+
+    def __init__(self, axes, **kwargs):
+        self.params.update(
+            {
+                "x": None,
+                "y": None,
+            }
+        )
+        super(Bar, self).__init__(axes, **kwargs)
+        self.plot()
+
+    def plot(self, params):
+        """
+        plot bars from params dict
+        :param ax: matplotlib axes obj
+        :param params: dict, should have the following keys
+            {
+                "title": # title of graph,
+                "legends": # legends for multiple lines,
+                "x_label": # x axis label,
+                "y_label": # y axis label,
+                "x": # x data,
+                "y": # y data,
+                "save_name": # save file name
+            }
+        :return: False if failed to plot, ax obj otherwise
+        """
+        if len(params["x"]) == 0:
+            return False
+        if len(params["x"][0]) <= 1:
+            return False
+        else:
+            x_ticks = []
+            x_ticklabels = []
+            tick = 0
+            for x in params["x"]:
+                for x_label in x:
+                    if x_label not in x_ticklabels:
+                        x_ticklabels.append(x_label)
+                        x_ticks.append(tick)
+                        tick += 1
+            bars_cnt = len(params["legends"])  # should = len(params["x])
+            # 4 bars share 1 unit (cm)
+            dist = bars_cnt / 4 + 1
+            bar_width = float(1.0) / float(bars_cnt + 1)
+            offset = 0.0
+            cnt = 0
+            for x_labels, y in zip(params["x"], params["y"]):
+                _ticks = [x_ticklabels.index(x_label) for x_label in x_labels]
+                _ticks = map(lambda x: x * dist, _ticks)
+                x_pos = [x + offset for x in _ticks]
+                self.ax.bar(x_pos, height=y, width=bar_width, color=colors[cnt])
+                offset += bar_width
+                cnt += 1
+            # scale x_ticks for grouped bars and then move to center a little
+            x_ticks = [x * dist for x in x_ticks]
+            x_ticks = [x + bar_width for x in x_ticks]
+            self.ax.set_xticks(x_ticks)
+            self.ax.set_xticklabels(x_ticklabels, ha="center", rotation=45)
+            self.set_title()
+            self.ax.legend(params["legends"], loc="best")
+            self.ax.set_xlabel(params["x_label"])
+            self.ax.set_ylabel(params["y_label"])
+            return self.ax
+
+
 # color scheme courtesy to
 # http://www.randalolson.com/2014/06/28/\
 # how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
@@ -49,9 +215,6 @@ colors = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
 for c in range(len(colors)):
     r, g, b = colors[c]
     colors[c] = (r / 255., g / 255., b / 255.)
-
-
-plt.style.use('ggplot')
 
 
 def _set_title(ax, title_text, max_len=60):
@@ -135,8 +298,6 @@ def lines(ax, params):
             "y": # y data,
             "save_name": # save file name
         }
-    :param fig_format: figure format, "png" or "pdf
-    :param output_dir: directory  where figs will be saved
     :return: False if failed to plot, ax obj otherwise
     """
     cnt = 0
