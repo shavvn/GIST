@@ -519,7 +519,7 @@ class SSTAnalysis(object):
             if os.path.exists(summary_csv):
                 self.summary_csv = summary_csv
             else:
-                exit("not valid summary csv file input")
+                exit("not valid summary csv file input: %s" % summary_csv)
 
         if csv_files:
             if isinstance(csv_files, list):
@@ -860,8 +860,8 @@ class SSTAnalysis(object):
         """
         if "topo" in df and "shape" in df:
             new_df = df.copy()
-            new_df["num_nodes"] = new_df.apply(lambda x: cal_num_nodes(x["topo"],
-                                                                       x["shape"]),
+            new_df["num_nodes"] = new_df.apply(lambda x: SSTAnalysis.cal_num_nodes(x["topo"],
+                                                                                   x["shape"]),
                                                axis=1)
             return new_df
         else:
