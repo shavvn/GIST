@@ -7,6 +7,35 @@ from gist import utils
 def mask(df, key, value):
     return df[df[key] == value]
 
+pd.DataFrame.mask = mask
+
+
+def filter_key_val(df, **kwargs):
+    """
+    this will filter df based on a key: value pair
+    :param df:
+    :param key_val_dict:
+    :return:
+    """
+    new_df = df.copy(deep=True)
+    for key, val in kwargs:
+        new_df = new_df.mask(key, val)
+    return new_df
+
+
+def filter_key_vals(df, **kwargs):
+    """
+    this will filter df based on key:[vals]
+    :param df:
+    :param kwargs:
+    :return:
+    """
+    new_df = df.copy(deep=True)
+    for key, vals in kwargs:
+        assert isinstance(vals, list)
+        new_df = new_df[key].isin(vals)
+    return new_df
+
 
 def move_bw_unit_to_index(df):
     """
@@ -281,6 +310,6 @@ def get_plotable_data_3d(df, result_cols, ignored_cols=None):
     return graph_params
 
 
-pd.DataFrame.mask = mask
+
 
 

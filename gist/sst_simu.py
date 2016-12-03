@@ -548,6 +548,7 @@ class SSTAnalysis(object):
 
         self.df = analysis.move_time_unit_to_header(self.df)
 
+        return self.df
 
     @staticmethod
     def separate_topos(df):
