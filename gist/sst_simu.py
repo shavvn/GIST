@@ -548,6 +548,8 @@ class SSTAnalysis(object):
 
         self.df = analysis.move_time_unit_to_header(self.df)
 
+        self.df = self.separate_topos(self.df)
+
         return self.df
 
     @staticmethod
@@ -860,8 +862,8 @@ class SSTAnalysis(object):
         """
         if "topo" in df and "shape" in df:
             new_df = df.copy()
-            new_df["num_nodes"] = new_df.apply(lambda x: cal_num_nodes(x["topo"],
-                                                                       x["shape"]),
+            new_df["num_nodes"] = new_df.apply(lambda x: SSTAnalysis.cal_num_nodes(x["topo"],
+                                                                                   x["shape"]),
                                                axis=1)
             return new_df
         else:
