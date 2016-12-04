@@ -43,6 +43,7 @@ class Colors(object):
     def __init__(self, scheme="colorful", ncolors=0):
         self.colors = []
         self.type = "colorful"
+        self.counter = 0
         if scheme == "colorful":
             colors = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
                       (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
@@ -74,6 +75,58 @@ class Colors(object):
     def __getitem__(self, item):
         return self.colors[item]
 
+    def next(self):
+        next_color = self.colors[self.counter]
+        self.counter += 1
+        if self.counter == self.__len__():
+            self.counter = 0
+        return next_color
+
+
+class Markers(object):
+
+    def __init__(self):
+        self.markers = {  # this is a copy from matplotlib.markers.py ...
+            '.': 'point',
+            # ',': 'pixel',
+            'o': 'circle',
+            'v': 'triangle_down',
+            '^': 'triangle_up',
+            '<': 'triangle_left',
+            '>': 'triangle_right',
+            '1': 'tri_down',
+            '2': 'tri_up',
+            '3': 'tri_left',
+            '4': 'tri_right',
+            '8': 'octagon',
+            's': 'square',
+            'p': 'pentagon',
+            '*': 'star',
+            'h': 'hexagon1',
+            'H': 'hexagon2',
+            # '+': 'plus',
+            # 'x': 'x',
+            'D': 'diamond',
+            'd': 'thin_diamond',
+            # '|': 'vline',
+            # '_': 'hline',
+            }.keys()
+
+        self.counter = 0
+
+    def __len__(self):
+        return len(self.markers)
+
+    def __getitem__(self, item):
+        return self.markers[item]
+
+    def next(self):
+        next_marker = self.markers[self.counter]
+        self.counter += 1
+        if self.counter == self.__len__():
+            self.counter = 0
+        return next_marker
+
 
 class Axes2D(object):
     def __init__(self, axes, **kwargs):
@@ -84,11 +137,12 @@ class Axes2D(object):
             "xticks": None,
             "ylabel": "Y Axis",
             "yticks": None,
-            "data": None,
             "color_scheme": "colorful",
             "legends": False
         }
         self.set_params(**kwargs)
+        self.colors = Colors(self.params["color_scheme"])
+        self.markers = Markers()
 
     def set_params(self, **kwargs):
         self.params.update(kwargs)
@@ -133,6 +187,38 @@ class Axes2D(object):
             self.ax.set_yticklabels(self.params["yticks"], va="center")
         self.ax.set_ylim(0)
 
+    def set_legend(self):
+        if self.params["legends"]:
+            self.ax.legend(self.params["legends"], loc="best")
+        else:
+            return
+
+
+class Scatter(Axes2D):
+
+    def __init__(self, axes, **kwargs):
+        super(Scatter, self).__init__(axes, **kwargs)
+
+        assert "x" in self.params
+        assert "y" in self.params
+
+        if not (self.params["x"] and self.params["y"]):
+            exit("Input data x and y must be specified!")
+
+        self.plot()
+
+    def plot(self):
+        assert len(self.params["x"]) == len(self.params["y"])
+        assert type(self.params["x"]) == type(self.params["y"])
+        for x, y in zip(self.params["x"], self.params["y"]):
+            self.ax.scatter(x,
+                            y,
+                            color=next(self.colors),
+                            marker=next(self.markers),
+                            s=20
+                            )
+        self.set_legend()
+
 
 class Bar(Axes2D):
 
@@ -149,7 +235,6 @@ class Bar(Axes2D):
     def plot(self, params):
         """
         plot bars from params dict
-        :param ax: matplotlib axes obj
         :param params: dict, should have the following keys
             {
                 "title": # title of graph,
