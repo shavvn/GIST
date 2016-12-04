@@ -184,7 +184,7 @@ def replace_special_char(input_str):
     :param input_str: input tring
     :return:
     """
-    spec_chars = ["(", ")", "/", "\\", ",", ".", "[", "]", "{", "}"]
+    spec_chars = ["(", ")", "/", "\\", ",", ".", "[", "]", "{", "}", ":"]
     new_string = input_str
     for char in spec_chars:
         if char in input_str:

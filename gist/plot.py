@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import matplotlib.pyplot as plt
 
 """
@@ -175,16 +176,7 @@ class Axes2D(object):
         self.ax.set_xlim(0)
 
     def set_y_axis(self):
-        ticks = self.params["yticks"]
-        self.ax.yaxis.set_label_position('bottom')
-        self.ax.yaxis.set_ticks_position('bottom')
         self.ax.set_ylabel(self.params["ylabel"])
-        if not ticks:
-            pass
-        else:
-            ticks = range(len(ticks))
-            self.ax.set_yticks(ticks)
-            self.ax.set_yticklabels(self.params["yticks"], va="center")
         self.ax.set_ylim(0)
 
     def set_legend(self):
@@ -220,33 +212,67 @@ class Scatter(Axes2D):
         self.set_legend()
 
 
+class GroupedBar(Axes2D):
+    def __init__(self, axes, **kwargs):
+        super(GroupedBar, self).__init__(axes, **kwargs)
+
+        assert "x" in self.params
+        assert "y" in self.params
+
+        self.plot()
+
+    def plot(self):
+        x = self.params["x"]
+        y = self.params["y"]
+        for each_y in y:
+            assert len(each_y) == len(x)
+        num_bars_per_group = len(y)
+        num_groups = len(x)
+        bar_width = 1./(num_bars_per_group+1)
+        x_pos = np.arange(num_groups, dtype=np.float)
+
+        for each_y in y:
+            self.ax.bar(x_pos,
+                        height=each_y,
+                        width=bar_width,
+                        color=next(self.colors))
+            x_pos += bar_width
+
+        self.set_title()
+        # self.set_x_axis()
+        x_ticks = np.arange(num_groups, dtype=np.float) + 0.5
+        x_ticklabels = map(str, x)
+
+        self.set_xaxis(x_ticks, x_ticklabels, self.params["xlabel"])
+        self.set_y_axis()
+        self.set_legend()
+
+    def set_xaxis(self, x_ticks, x_ticklabels, x_label):
+        self.ax.set_xlabel(self.params["xlabel"])
+        self.ax.set_xticks(x_ticks)
+        self.ax.set_xticklabels(x_ticklabels)
+
+
 class Bar(Axes2D):
 
     def __init__(self, axes, **kwargs):
-        self.params.update(
-            {
-                "x": None,
-                "y": None,
-            }
-        )
         super(Bar, self).__init__(axes, **kwargs)
+
+        assert "x" in self.params
+        assert "y" in self.params
+
+        if not (self.params["x"] and self.params["y"]):
+            exit("Input data x and y must be specified!")
+
         self.plot()
 
-    def plot(self, params):
+    def plot(self):
         """
-        plot bars from params dict
-        :param params: dict, should have the following keys
-            {
-                "title": # title of graph,
-                "legends": # legends for multiple lines,
-                "x_label": # x axis label,
-                "y_label": # y axis label,
-                "x": # x data,
-                "y": # y data,
-                "save_name": # save file name
-            }
+        data in the following format
+        [[group_1_x_1, group_2_x_1, group_3_x_1 ... ], [group_1_x_2, group_2_x_2, ...]]
         :return: False if failed to plot, ax obj otherwise
         """
+
         if len(params["x"]) == 0:
             return False
         if len(params["x"][0]) <= 1:
