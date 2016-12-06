@@ -7,12 +7,13 @@ import sys
 from collections import OrderedDict
 from subprocess import call
 
-import gist.utils
+
 import numpy as np
 import pandas as pd
 import simulator
 from gist import analysis
 from gist import plot
+from gist import utils
 
 
 def get_exe_time_in_line(line):
@@ -180,7 +181,7 @@ def get_ember_output_from_line(line):
         lat_index = tokens.index("latency")
         lat = tokens[lat_index + 1]
         lat_unit = tokens[lat_index + 2]
-        lat_in_us = str(gist.utils.convert_time_to_us(lat, lat_unit))
+        lat_in_us = str(utils.convert_time_to_us(lat, lat_unit))
         results["real_latency(us)"] = lat_in_us
     if "bandwidth" in line:
         bw_index = tokens.index("bandwidth")
@@ -189,7 +190,7 @@ def get_ember_output_from_line(line):
     if "total time" in line:
         time_idx = tokens.index("time") + 1
         unit_idx = time_idx + 1
-        sim_time = str(gist.utils.convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
+        sim_time = str(utils.convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
         results["work_time(us)"] = sim_time
     if "Simulation is complete" in line:
         exe_time = str(get_exe_time_in_line(line))
@@ -329,7 +330,7 @@ def compile_ember_output(log_name, output_dir_base,
                         lat_index = tokens.index("latency")
                         lat = tokens[lat_index + 1]
                         lat_unit = tokens[lat_index + 2]
-                        lat_in_us = str(gist.utils.convert_time_to_us(lat, lat_unit))
+                        lat_in_us = str(utils.convert_time_to_us(lat, lat_unit))
                         sim_results.update({"real_latency(us)": lat_in_us})
                     if "bandwidth" in line:
                         bw_index = tokens.index("bandwidth")
@@ -339,7 +340,7 @@ def compile_ember_output(log_name, output_dir_base,
                         # sim time give by particular workload is more precise than total sim time
                         time_idx = tokens.index("time") + 1
                         unit_idx = time_idx + 1
-                        sim_time = str(gist.utils.convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
+                        sim_time = str(utils.convert_time_to_us(tokens[time_idx], tokens[unit_idx]))
                         sim_results.update({"exe_time(us)": sim_time})
                     continue
                 else:
@@ -368,7 +369,7 @@ def compile_ember_output(log_name, output_dir_base,
 
 def plot_ember_summary(summary_csv, output_dir_base):
     df = pd.read_csv(summary_csv)
-    df = analysis.move_bw_unit_to_index(df)
+    df = utils.move_bw_unit_to_index(df)
     df = df.replace(np.nan, -1)
     df = SSTAnalysis.separate_topos(df)
     df = SSTAnalysis.add_radix_col(df)
@@ -423,15 +424,15 @@ class SSTSimulator(simulator.Simulator):
         :return: none
         """
         self.cmd = self.assemble_command()
-        gist.utils.dump_param_summary(self.param_list, self.output_base_dir)
+        utils.dump_param_summary(self.param_list, self.output_base_dir)
         self._add_other_opts_to_params()
         config_d = self.sim_opts["config_dir"]
         if self.sim_opts["config_file"] != "temp":
-            tmp_fp_list = gist.utils.get_param_files(config_d,
+            tmp_fp_list = utils.get_param_files(config_d,
                                                      self.param_list)
         else:
-            gist.utils.setup_tmp_config_dir(config_d)
-            tmp_fp_list = gist.utils.get_tmp_param_files(self.param_list)
+            utils.setup_tmp_config_dir(config_d)
+            tmp_fp_list = utils.get_tmp_param_files(self.param_list)
             
         output_as_file = (self.sim_opts["output_as"] == "file")
         counter = 0
@@ -474,7 +475,7 @@ class SSTSimulator(simulator.Simulator):
             d = param.copy()
             d.update(results)
             # TODO it works but it might be better to use pandas hierarchical index?
-            keys, vals = gist.utils.get_key_val_in_nested_dict(d)
+            keys, vals = utils.get_key_val_in_nested_dict(d)
             d = dict(zip(keys, vals))
             dict_list.append(d)
             cnt += 1
@@ -496,7 +497,7 @@ class SSTSimulator(simulator.Simulator):
             results = get_ember_output_from_file(log_name)
             d = param.copy()
             d.update(results)
-            dict_list.append(gist.utils.flatten_dict(d))
+            dict_list.append(utils.flatten_dict(d))
             cnt += 1
         self.df = pd.DataFrame(dict_list)
         output_name = os.path.join(self.output_base_dir, "summary.csv")
@@ -544,9 +545,9 @@ class SSTAnalysis(object):
         # add a column of radix
         self.df = self.add_radix_col(self.df)
 
-        self.df = analysis.move_bw_unit_to_index(self.df)
+        self.df = utils.move_bw_unit_to_index(self.df)
 
-        self.df = analysis.move_time_unit_to_header(self.df)
+        self.df = utils.move_time_unit_to_header(self.df)
 
         self.df = self.separate_topos(self.df)
 

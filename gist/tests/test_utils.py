@@ -1,4 +1,5 @@
 import unittest
+import pandas as pd
 from .. import utils
 
 
@@ -71,6 +72,12 @@ class UtilTest(unittest.TestCase):
         t, u = utils.convert_time_str(in_str, "us")
         self.assertEqual(t, 0.1)
         self.assertEqual(u, "us")
+
+    def test_move_time_to_header(self):
+        df = pd.DataFrame([{"time": "1us", "bw": "1GB/s"},
+                           {"time": "1ns", "bw": "10.1GB/s"}])
+        df = utils.move_time_unit_to_header(df)
+        self.assertEqual(df.loc[0, "time(ns)"], 1000)
 
 if __name__ == '__main__':
     unittest.main()

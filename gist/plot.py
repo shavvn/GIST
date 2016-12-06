@@ -159,6 +159,7 @@ class Axes2D(object):
         new_title = ""
         for c in chunks:
             new_title += (c + os.linesep)
+        new_title = new_title[:-1]
         self.ax.set_title(new_title)
 
     def set_x_axis(self):
@@ -181,7 +182,10 @@ class Axes2D(object):
 
     def set_legend(self):
         if self.params["legends"]:
-            self.ax.legend(self.params["legends"], loc="best")
+            self.ax.legend(
+                self.params["legends"],
+                loc='center left',  # while this put the legends on the right
+                bbox_to_anchor=(1, 0.5))
         else:
             return
 
@@ -216,16 +220,29 @@ class GroupedBar(Axes2D):
     def __init__(self, axes, **kwargs):
         """
         :param axes: axes object
-        :param kwargs: key thing here is to understand how x, y works
-        e.g. there are n groups of bars, and each group with m bars,
-        and then x should be an m x n 2D array
-        and y should be an 1D array with m x n elements
-        there should be n x ticks/ticklabels
+        :param kwargs: key thing here is to understand how y is packed here
+        lets say we have m groups and each has n bars per group
+
+        it is more intuitive to pack data as an m x n array, i.e. each group as
+        a subarray and m groups, (group_by_xmajor=True), however, this is tweaky
+        to plot. This is set by default for user convenience
+
+        another way to pack y is n x m (group_by_xmajor=False), which packs the
+        1st bars of each group into a subarray and so on.
+
         """
         super(GroupedBar, self).__init__(axes, **kwargs)
 
-        assert "x" in self.params
-        assert "y" in self.params
+        gb_params = {
+            "x": [],
+            "y": [],
+            "group_by_xmajor": True
+        }
+        gb_params.update(kwargs)
+        self.params.update(gb_params)
+
+        if self.params["group_by_xmajor"]:
+            self.params["y"] = zip(*self.params["y"])
 
         self.plot()
 

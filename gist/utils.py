@@ -468,3 +468,53 @@ def copy_input_to_output_dir(config_input, output_dir_base):
     except IOError:
         print "cannot copy config file to output dir"
         return False
+
+
+def move_bw_unit_to_index(df):
+    """
+    This is pretty tricky since pandas makes the object copy behavior
+    very unpredictable
+    :param df: input df, should have no side effect after this func call
+    :return: a new copy of df that has bw units moved to col label
+    """
+    # make a new copy to avoid side effects
+    new_df = df.copy(deep=True)
+    col_replace_pairs = {}
+    for col in new_df:
+        if new_df[col].dtype == 'O':
+            bw_rows = new_df[col].str.contains(r'\d+\.*\d*\s*GB/s')
+            if bw_rows.any():
+                new_df[col].replace(regex=True, inplace=True,
+                                    to_replace=r'\D', value=r'')
+
+                new_df[col] = new_df[col].map(float)
+
+                # maybe do MB/s KB/s as well?
+                col_replace_pairs.update({col: col+"(GB/s)"})
+
+    new_df.rename(columns=col_replace_pairs, inplace=True)
+    return new_df
+
+
+def move_time_unit_to_header(df):
+    new_df = df.copy(deep=True)
+    replace_pairs = {}
+    for col in new_df:
+        if new_df[col].apply(find_time_unit).any():
+            new_df[col] = new_df[col].map(convert_time_to_ns)
+            replace_pairs[col] = col + "(ns)"
+    new_df.rename(columns=replace_pairs, inplace=True)
+    return new_df
+
+
+def move_units_to_index(df):
+    """
+    This function should be part of pre-processing before plotting
+    this moves
+    e.g. from "bw": ["1GB/s", "2GB/s"] to "bw(GB/s)": [1, 2]
+    NOTE this should be done before replacing NaN with -1
+    :param df: input df that may have units in its values
+    :return: a df that has all units moved to col
+    """
+    move_bw_unit_to_index(df)
+    move_time_unit_to_header(df)

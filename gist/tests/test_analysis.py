@@ -1,5 +1,7 @@
 import os
 import unittest
+
+import gist.utils
 import numpy as np
 import pandas as pd
 from .. import analysis
@@ -11,7 +13,7 @@ class AnalysisTest(unittest.TestCase):
         self.df = pd.read_csv(csv_file_in)
 
     def test_move_bw_to_index(self):
-        new_df = analysis.move_bw_unit_to_index(self.df)
+        new_df = gist.utils.move_bw_unit_to_index(self.df)
         self.assertEqual(new_df.loc[0, "link_bw(GB/s)"], 1.0)
 
     def test_get_title_text(self):
@@ -31,8 +33,10 @@ class AnalysisTest(unittest.TestCase):
         v = analysis._pd_data_valid(s)
         self.assertTrue(v)
 
-    def test_move_time_to_header(self):
-        df = pd.DataFrame([{"time": "1us", "bw": "1GB/s"},
-                           {"time": "1ns", "bw": "10.1GB/s"}])
-        df = analysis.move_time_unit_to_header(df)
-        self.assertEqual(df.loc[0, "time(ns)"], 1000)
+    def test_normalize(self):
+        s = pd.Series([1, 2.5, 5, 10])
+        s = analysis.normalize_to_one(s)
+        self.assertEqual(s[0], 0.1)
+        self.assertEqual(s[1], 0.25)
+        self.assertEqual(s[2], 0.5)
+        self.assertEqual(s[3], 1)
