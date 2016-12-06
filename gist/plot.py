@@ -214,6 +214,14 @@ class Scatter(Axes2D):
 
 class GroupedBar(Axes2D):
     def __init__(self, axes, **kwargs):
+        """
+        :param axes: axes object
+        :param kwargs: key thing here is to understand how x, y works
+        e.g. there are n groups of bars, and each group with m bars,
+        and then x should be an m x n 2D array
+        and y should be an 1D array with m x n elements
+        there should be n x ticks/ticklabels
+        """
         super(GroupedBar, self).__init__(axes, **kwargs)
 
         assert "x" in self.params
@@ -248,7 +256,7 @@ class GroupedBar(Axes2D):
         self.set_legend()
 
     def set_xaxis(self, x_ticks, x_ticklabels, x_label):
-        self.ax.set_xlabel(self.params["xlabel"])
+        self.ax.set_xlabel(x_label)
         self.ax.set_xticks(x_ticks)
         self.ax.set_xticklabels(x_ticklabels)
 
