@@ -159,7 +159,7 @@ class Axes2D(object):
         new_title = ""
         for c in chunks:
             new_title += (c + os.linesep)
-        new_title = new_title[:-1]
+        new_title = new_title.strip()
         self.ax.set_title(new_title)
 
     def set_x_axis(self):
